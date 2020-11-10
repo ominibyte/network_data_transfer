@@ -2,12 +2,13 @@ part of 'host.dart';
 
 class Client extends Host{
   Socket _socket;
+  bool _connected;
 
   Client({String name, int multicastPort, String multicastGroupIP, IPVersion ipVersion,
-    DeviceDiscoveryListener deviceDiscoveryListener})
+    DeviceDiscoveryListener deviceDiscoveryListener, ConnectionListener connectionListener})
       : super(multicastPort: multicastPort, multicastGroupIP : multicastGroupIP, ipVersion: ipVersion,
           deviceDiscoveryListener : deviceDiscoveryListener, name: name){
-
+    _connected = false;
     _findFirstIPAddress().then<void>((_){
       if( !_readyCompleter.isCompleted )
         _readyCompleter.complete(true);
@@ -37,28 +38,48 @@ class Client extends Host{
           Device device = new Device(datagram.address.address, datagram.port);
           if( !_discoveredDevices.contains(device) ){
             _discoveredDevices.add(device);
-            _listener?.onDiscovery(device, _discoveredDevices);
+            _discoveryListener?.onDiscovery(device, _discoveredDevices);
           }
         }
       }
-    }, onDone: (){}, onError: (){});
+    }, onDone: (){
+      //TODO
+    }, onError: (){
+      //TODO
+    });
   }
 
-  /// The client can connect to the Server that is already listening for connection
-  void connectTo(Device device) async{
+  /// The client can connect to the Server that is already listening for connection.
+  /// @ipAddress is the IP to use in connecting to the server.
+  /// All IP addresses for host can be obtained using the ipAddresses property
+  void connectTo(Device device, {String ipAddress}) async{
     // Use the detected IP address to connect to the server
-    Socket socket = await Socket.connect(device.ip, device.port, sourceAddress: _ipAddress);
-    if( socket == null )
+    _socket = await Socket.connect(device.ip, device.port, sourceAddress: ipAddress ?? _ipAddress);
+    if( _socket == null )
       throw "Could not connect to the Server at ${device.ip}:${device.port}. Please try again later.";
-
+    _connected = true;
     device._isConnected = true;
-    device._socket = socket;
+    device._socket = _socket;
+    // fire connection listener
+    _connectionListener?.onConnected(device);
 
+    _socket.listen((event) {
+      _connectionListener?.onMessage(Packet.fromBytes(event), device);
+    }, onError: (e){
+      _socket.destroy();
+      device._connected = null;
+      // fire disconnection listener
+      _connectionListener?.onDisconnected(device);
+      _connected = false;
+    }, cancelOnError: true);
   }
 
   @override
-  void disconnect() {
+  void disconnect() async{
     _multicastSocket?.leaveMulticast(InternetAddress( _multicastGroupIP ));
     _multicastSocket?.close();
+    await _socket?.close();
+    _socket.destroy();
+    _connected = false;
   }
 }

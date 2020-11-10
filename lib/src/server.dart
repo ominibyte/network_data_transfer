@@ -5,9 +5,11 @@ part of 'host.dart';
 class Server extends Host{
   ServerSocket _serverSocket;
   int _socketPort;  // The port where this
+  bool _running;
 
   Server({String name, int multicastPort, String multicastGroupIP, IPVersion ipVersion,
-    DeviceDiscoveryListener deviceDiscoveryListener, int serverSocketPort})
+    DeviceDiscoveryListener deviceDiscoveryListener, ConnectionListener connectionListener,
+    int serverSocketPort})
       : super(name: name, multicastPort: multicastPort, multicastGroupIP : multicastGroupIP,
         ipVersion: ipVersion, deviceDiscoveryListener : deviceDiscoveryListener){
     _socketPort = serverSocketPort ?? 0;
@@ -24,6 +26,7 @@ class Server extends Host{
   void _init(){
     // reset the ready completer just in case we may need to call init again on failed start
     _readyCompleter = Completer();
+    _running = false;
 
     // First detect the IP address of the server which we will listen to
     // next, start listening for connections on the socket port
@@ -45,11 +48,16 @@ class Server extends Host{
     _serverSocket = await ServerSocket.bind(_ipAddress, _socketPort);
     // Update the port just in case no port was specified for connection
     _socketPort = _serverSocket.port;
-    _serverSocket.listen(_processSocket, onError: (e){
-      //TODO
-    }, onDone: (){
-      //TODO
-    });
+    _serverSocket.listen(
+      _processSocket,
+      onError: (e){
+        _running = false;
+      },
+      onDone: (){
+        _running = false;
+      },
+      cancelOnError: true
+    );
   }
 
   // Handle the new connection
@@ -58,23 +66,26 @@ class Server extends Host{
     Device device = new Device(socket.remoteAddress.address, socket.remotePort);
     // Inform any listener if this device is new. This means this device didn't use
     // The discovery mode for connection. The server might likely be using a static IP
-    //TODO fire to connection listener
     if( !_discoveredDevices.contains(device) ){
       _discoveredDevices.add(device);
-      _listener?.onDiscovery(device, _discoveredDevices);
+      _discoveryListener?.onDiscovery(device, _discoveredDevices);
     }
     else  // get the current device from discovered devices and set the connection details
       device = _discoveredDevices.lookup(device);
 
     device._isConnected = true;
     device._socket = socket;
+    // fire connection listener
+    _connectionListener?.onConnected(device);
+    
     socket.listen((event) {
-
+      _connectionListener?.onMessage(Packet.fromBytes(event), device);
     }, onError: (e){
-
-    }, onDone: (){
-
-    });
+      socket.destroy();
+      device._connected = null;
+      // fire disconnection listener
+      _connectionListener?.onDisconnected(device);
+    }, cancelOnError: true);
   }
 
   Future<void> _enableDiscovery() async {
@@ -91,11 +102,15 @@ class Server extends Host{
           Device device = new Device(datagram.address.address, datagram.port);
           if( !_discoveredDevices.contains(device) ){
             _discoveredDevices.add(device);
-            _listener?.onDiscovery(device, _discoveredDevices);
+            _discoveryListener?.onDiscovery(device, _discoveredDevices);
           }
         }
       }
-    }, onDone: (){}, onError: (){});
+    }, onDone: (){
+      //TODO
+    }, onError: (){
+      //TODO
+    });
 
     _timer = Timer.periodic(Duration(seconds: 1), (_) {
       if ( _timer.isActive ) {
@@ -130,9 +145,13 @@ class Server extends Host{
     }
   }
 
+  bool get running => _running;
+
   @override
-  void disconnect() {
+  void disconnect() async{
     _timer?.cancel();
     _multicastSocket?.close();
+    await _serverSocket?.close();
+    _running = false;
   }
 }

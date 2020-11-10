@@ -8,5 +8,5 @@ part of 'host.dart';
 abstract class ConnectionListener{
   void onConnected(Device device);
   void onDisconnected(Device device);
-  void onMessage(Packet packet);
+  void onMessage(Packet packet, Device device);
 }

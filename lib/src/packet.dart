@@ -4,9 +4,12 @@ part of 'host.dart';
 /// and is just a wrapper around the raw bytes
 class Packet{
   List<int> _bytes; // The raw bytes
+  Stream<List<int>> _stream;
+  bool _isStream;
 
   Packet(){
     _bytes = List<int>();
+    _isStream = false;
   }
 
   /// Allow Packets to be created from different data types. Supported data types are:
@@ -29,6 +32,7 @@ class Packet{
       throw new Exception("Unsupported data type. Serialize to one of the supported formats");
 
     p._bytes = utf8.encode(content);
+    p._isStream = false;
     return p;
   }
 
@@ -36,19 +40,51 @@ class Packet{
   factory Packet.fromBytes(List<int> bytes){
     Packet p = Packet();
     p._bytes = bytes.sublist(0);
+    p._isStream = false;
     return p;
   }
 
-  add(int byte) => _bytes.add(byte);
-  addAll(Iterable<int> bytes) => _bytes.addAll(bytes);
+  /// Allow Packets to be created from Stream
+  factory Packet.fromStream(Stream<List<int>> stream){
+    Packet p = Packet();
+    p._stream = stream;
+    p._isStream = true;
+    return p;
+  }
 
-  Uint8List get bytes => Uint8List.fromList(_bytes);
-  int get size => _bytes.length;
+  add(int byte){
+    assert(_isStream != null && !_isStream);
+    _bytes.add(byte);
+  }
+
+  addAll(Iterable<int> bytes){
+    assert(_isStream != null && !_isStream);
+    _bytes.addAll(bytes);
+  }
+
+  Uint8List get bytes{
+    assert(_isStream != null && !_isStream);
+    return Uint8List.fromList(_bytes);
+  }
+
+  bool get isStream => _isStream;
+
+  Stream get stream{
+    assert(_isStream != null && _isStream);
+    return _stream;
+  }
+
+  int get size{
+    assert(_isStream != null && !_isStream);
+    return _bytes.length;
+  }
 
   /// Allow transformation back to popular data types
   /// For using these methods, We're assuming it is safe to transform to String
 
   E as<E>(){
+    assert(_isStream != null && !_isStream);
+
     if( E == String )
       return asString() as E;
     else if( E.toString() == Map<String, dynamic>().runtimeType.toString() )
@@ -66,26 +102,32 @@ class Packet{
   }
 
   String asString(){
+    assert(_isStream != null && !_isStream);
     return utf8.decode(_bytes.toList());
   }
 
   Map<String, dynamic> asMap(){
+    assert(_isStream != null && !_isStream);
     return jsonDecode(asString());
   }
 
   List<dynamic> asList(){
+    assert(_isStream != null && !_isStream);
     return jsonDecode(asString());
   }
 
   num asNumber(){
+    assert(_isStream != null && !_isStream);
     return num.parse(asString());
   }
 
   int asInt(){
+    assert(_isStream != null && !_isStream);
     return int.parse(asString());
   }
 
   double asDouble(){
+    assert(_isStream != null && !_isStream);
     return double.parse(asString());
   }
 }

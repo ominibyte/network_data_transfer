@@ -16,11 +16,11 @@ part 'packet.dart';
 /// A Client and a Server are both hosts
 abstract class Host{
   // The default discovery port to listen on if the user does not specify any
-  static const int MULTICAST_PORT = 5018;
+  static const int DEFAULT_MULTICAST_PORT = 5018;
   // The multicast group the devices should join
-  static const String MULTICAST_GROUP_IP = "225.225.225.225";
+  static const String DEFAULT_MULTICAST_GROUP_IP = "225.225.225.225";
   // TODO later we can allow a range of ports to listen on for discovery
-  // The actual discovery port to listen on.
+  // The actual multicast discovery port to listen on.
   int _port;
   IPVersion _ipVersion;
   RawDatagramSocket _multicastSocket;
@@ -30,11 +30,12 @@ abstract class Host{
   Map<Device, Socket> _devices;  // These are devices which have connected to us
   Timer _timer;
   String _multicastGroupIP;
-  DeviceDiscoveryListener _listener;
+  DeviceDiscoveryListener _discoveryListener;
+  ConnectionListener _connectionListener;
   String _name; // A name/identifier to give this host
 
-  Host({String name, int multicastPort = MULTICAST_PORT, String multicastGroupIP = MULTICAST_GROUP_IP,
-    IPVersion ipVersion = IPVersion.any, DeviceDiscoveryListener deviceDiscoveryListener}){
+  Host({String name, int multicastPort = DEFAULT_MULTICAST_PORT, String multicastGroupIP = DEFAULT_MULTICAST_GROUP_IP,
+    IPVersion ipVersion = IPVersion.any, DeviceDiscoveryListener deviceDiscoveryListener, ConnectionListener connectionListener}){
     assert(multicastPort != null);
     assert(multicastGroupIP != null);
     assert(ipVersion != null);
@@ -44,7 +45,8 @@ abstract class Host{
     _port = multicastPort;
     _ipVersion = ipVersion;
     _multicastGroupIP = multicastGroupIP;
-    _listener = deviceDiscoveryListener;
+    _discoveryListener = deviceDiscoveryListener;
+    _connectionListener = connectionListener;
     _discoveredDevices = Set();
   }
 
@@ -65,8 +67,16 @@ abstract class Host{
   // contained in the Device
   send(Packet packet, Device device) async{
     // check if we have a socket for the device
-    if( device.connected )
-      device._socket..add(packet.bytes)..flush();
+    if( device.connected && device._socket != null ) {
+      if( packet.isStream ) {
+        await device._socket.addStream(packet.stream);
+        await device._socket.flush();
+      }
+      else{
+        await device._socket.add(packet.bytes);
+        await device._socket.flush();
+      }
+    }
   }
 
 
@@ -86,7 +96,8 @@ abstract class Host{
   /// Get all IP addresses for IPv6
   Future<Iterable<String>> get ipv6Addresses async => _getAddresses(InternetAddressType.IPv6);
 
-  /// Get all IP addresses for specified IP version
+  /// Get all IP addresses for specified IP version.
+  /// IP addresses are not cached because they could potentially be stale.
   Future<Iterable<String>> _getAddresses(InternetAddressType type) async{
     final interfaces = await NetworkInterface.list(includeLoopback: false,
         type: type);
