@@ -1,3 +1,7 @@
+## [0.0.1-dev.2] - 2020-11-10
+
+* Communication between Server and Client up and running
+
 ## [0.0.1-dev.1] - 2020-11-09
 
 * Initial alpha release

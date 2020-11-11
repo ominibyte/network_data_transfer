@@ -11,7 +11,6 @@ void main() async{
     name: "Client",
     deviceDiscoveryListener: MyDiscoveryListener(),
     connectionListener: MyConnectionListener(),
-
   );
 
   if(!await client.ready){
