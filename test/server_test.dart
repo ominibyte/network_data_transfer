@@ -10,6 +10,7 @@ void main() async{
     name: "Server",
     deviceDiscoveryListener: MyDiscoveryListener(),
     connectionListener: MyConnectionListener(),
+    listenOn: useFirstFoundIP // Optional. Do not provide to listen on all ip addresses
   );
 
   if(!await server.ready){
@@ -17,6 +18,11 @@ void main() async{
     return;
   }
   print("Server is ready at ${server.ipAddress}:${server.port}");
+}
+
+Future<String> useFirstFoundIP(Future<Iterable<String>> ips) async{
+  Iterable<String> ipAddresses = await ips;
+  return ipAddresses.first;
 }
 
 class MyDiscoveryListener implements DeviceDiscoveryListener{
@@ -49,7 +55,8 @@ class MyConnectionListener implements ConnectionListener{
   void onMessage(Packet packet, Device device) {
     print("Message Received from Client $device: ${packet.asString()}");
     Future.delayed(Duration(seconds: 1)).then((_) =>
-        server.send(Packet.from(WordPair.random().asPascalCase), device)
+        server.send(Packet.from(WordPair.random().asPascalCase), device,
+            ignoreIfNotConnected: true)
     );
   }
 }

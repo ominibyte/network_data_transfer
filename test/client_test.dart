@@ -55,7 +55,8 @@ class MyConnectionListener implements ConnectionListener{
     print("Message Received from Server $device: ${packet.asString()}");
     // Send message back to this client
     Future.delayed(Duration(seconds: 1)).then((_) =>
-        client.send(Packet.from(WordPair.random().asPascalCase), device)
+        client.send(Packet.from(WordPair.random().asPascalCase), device,
+            ignoreIfNotConnected: true)
     );
   }
 }
