@@ -1,5 +1,4 @@
 import 'package:network_data_transfer/src/host.dart';
-import 'package:test/test.dart';
 import 'package:english_words/english_words.dart';
 
 Iterable<Device> devices;
@@ -35,7 +34,9 @@ class MyDiscoveryListener implements DeviceDiscoveryListener{
   }
 
   @override
-  onClose(bool isError, Object error, StackTrace stackTrace){}
+  onClose(bool isError, Object error, StackTrace stackTrace){
+    print("Discovery multicast socket closed");
+  }
 }
 
 class MyConnectionListener implements ConnectionListener{
@@ -57,5 +58,4 @@ class MyConnectionListener implements ConnectionListener{
         client.send(Packet.from(WordPair.random().asPascalCase), device)
     );
   }
-
 }

@@ -13,7 +13,6 @@ See test directory on how to start a Client and Server.
 See `client_test.dart` below:
 ```dart
 import 'package:network_data_transfer/src/host.dart';
-import 'package:test/test.dart';
 import 'package:english_words/english_words.dart';
 
 Iterable<Device> devices;
@@ -47,6 +46,11 @@ class MyDiscoveryListener implements DeviceDiscoveryListener{
     // Connect to Server
     client.connectTo(newDevice);
   }
+
+  @override
+  onClose(bool isError, Object error, StackTrace stackTrace){
+    print("Discovery multicast socket closed");
+  }
 }
 
 class MyConnectionListener implements ConnectionListener{
@@ -56,7 +60,7 @@ class MyConnectionListener implements ConnectionListener{
   }
 
   @override
-  void onDisconnected(Device device) {
+  void onDisconnected(Device device, bool isError, Object error, StackTrace stackTrace) {
     print("Server Disconnected: $device");
   }
 
@@ -68,7 +72,6 @@ class MyConnectionListener implements ConnectionListener{
         client.send(Packet.from(WordPair.random().asPascalCase), device)
     );
   }
-
 }
 ```
 
@@ -76,7 +79,6 @@ class MyConnectionListener implements ConnectionListener{
 See `server_test.dart` below:
 ```dart
 import 'package:network_data_transfer/src/host.dart';
-import 'package:test/test.dart';
 import 'package:english_words/english_words.dart';
 
 Iterable<Device> devices;
@@ -103,6 +105,11 @@ class MyDiscoveryListener implements DeviceDiscoveryListener{
     print("New Client Device Alert: $newDevice");
     devices = allDevices;
   }
+
+  @override
+  onClose(bool isError, Object error, StackTrace stackTrace){
+    print("Discovery multicast socket closed");
+  }
 }
 
 class MyConnectionListener implements ConnectionListener{
@@ -114,7 +121,7 @@ class MyConnectionListener implements ConnectionListener{
   }
 
   @override
-  void onDisconnected(Device device) {
+  void onDisconnected(Device device, bool isError, Object error, StackTrace stackTrace) {
     print("Device Disconnected from Server: $device");
   }
 
@@ -125,6 +132,5 @@ class MyConnectionListener implements ConnectionListener{
         server.send(Packet.from(WordPair.random().asPascalCase), device)
     );
   }
-
 }
 ```
