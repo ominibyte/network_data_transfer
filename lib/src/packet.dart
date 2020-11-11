@@ -9,7 +9,7 @@ class Packet{
 
   Packet(){
     _bytes = List<int>();
-    _isStream = false;
+    _isStream = false;  // Default to false;
   }
 
   /// Allow Packets to be created from different data types. Supported data types are:
@@ -32,7 +32,6 @@ class Packet{
       throw new Exception("Unsupported data type. Serialize to one of the supported formats");
 
     p._bytes = utf8.encode(content);
-    p._isStream = false;
     return p;
   }
 
@@ -40,7 +39,6 @@ class Packet{
   factory Packet.fromBytes(List<int> bytes){
     Packet p = Packet();
     p._bytes = bytes.sublist(0);
-    p._isStream = false;
     return p;
   }
 

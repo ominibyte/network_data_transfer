@@ -4,14 +4,15 @@ part of 'host.dart';
 /// connected devices
 class Server extends Host{
   ServerSocket _serverSocket;
-  int _socketPort;  // The port where this
+  int _socketPort;  // The port where this server will be listening for reliable communication
   bool _running;
 
   Server({String name, int multicastPort, String multicastGroupIP, IPVersion ipVersion,
     DeviceDiscoveryListener deviceDiscoveryListener, ConnectionListener connectionListener,
     int serverSocketPort})
       : super(name: name, multicastPort: multicastPort, multicastGroupIP : multicastGroupIP,
-        ipVersion: ipVersion, deviceDiscoveryListener : deviceDiscoveryListener){
+        ipVersion: ipVersion, deviceDiscoveryListener : deviceDiscoveryListener,
+        connectionListener : connectionListener){
     _socketPort = serverSocketPort ?? 0;
     // check that the port is within a valid range
     if( _socketPort != 0 ){
@@ -23,7 +24,7 @@ class Server extends Host{
     _init();
   }
 
-  void _init(){
+  Future<void> _init(){
     // reset the ready completer just in case we may need to call init again on failed start
     _readyCompleter = Completer();
     _running = false;
@@ -31,16 +32,16 @@ class Server extends Host{
     // First detect the IP address of the server which we will listen to
     // next, start listening for connections on the socket port
     // before enabling discovery from clients.
-    _findFirstIPAddress()
+    return _findFirstIPAddress()
         .then((_) => _listenForConnections())
         .then((_) => _enableDiscovery())
         .then<void>((_){
-      if( !_readyCompleter.isCompleted )
-        _readyCompleter.complete(true);
-    }).catchError((){
-      if( !_readyCompleter.isCompleted )
-        _readyCompleter.complete(false);
-    });
+          if( !_readyCompleter.isCompleted )
+            _readyCompleter.complete(true);
+        }).catchError((e){
+          if( !_readyCompleter.isCompleted )
+            _readyCompleter.complete(false);
+        });
   }
 
   // server automatically listens for client incoming connections
@@ -52,9 +53,11 @@ class Server extends Host{
       _processSocket,
       onError: (e){
         _running = false;
+        print("Server Socket Error in Server: $e");
       },
       onDone: (){
         _running = false;
+        print("Server Socket Done in Server");
       },
       cancelOnError: true
     );
@@ -80,11 +83,18 @@ class Server extends Host{
     
     socket.listen((event) {
       _connectionListener?.onMessage(Packet.fromBytes(event), device);
-    }, onError: (e){
+    }, onDone: (){
       socket.destroy();
       device._connected = null;
       // fire disconnection listener
       _connectionListener?.onDisconnected(device);
+      print("Socket Done in Server");
+    },onError: (e){
+      socket.destroy();
+      device._connected = null;
+      // fire disconnection listener
+      _connectionListener?.onDisconnected(device);
+      print("Socket Error in Server: $e");
     }, cancelOnError: true);
   }
 
@@ -92,14 +102,18 @@ class Server extends Host{
     _multicastSocket = await RawDatagramSocket.bind(
         _ipVersion == IPVersion.any ? InternetAddressType.any :
         _ipVersion == IPVersion.v4 ? InternetAddress.anyIPv4 :
-        InternetAddress.anyIPv6, 0) // _port
+        InternetAddress.anyIPv6,
+        0, // _multicastPort or 0
+        reusePort: true)
       ..broadcastEnabled = true;
     _multicastSocket.readEventsEnabled = true;
     _multicastSocket.listen((event) {
       if (event == RawSocketEvent.read) {
         Datagram datagram = _multicastSocket.receive();
-        if (datagram != null && Packet.from(datagram.data).as<String>() == "PONG"){
-          Device device = new Device(datagram.address.address, datagram.port);
+        if (datagram != null && Packet.from(datagram.data).as<String>().startsWith("PONG")){
+          List<String> parts = Packet.from(datagram.data).as<String>().split("|");
+          Device device = new Device(datagram.address.address, datagram.port)
+            ..name = parts[1];
           if( !_discoveredDevices.contains(device) ){
             _discoveredDevices.add(device);
             _discoveryListener?.onDiscovery(device, _discoveredDevices);
@@ -108,8 +122,10 @@ class Server extends Host{
       }
     }, onDone: (){
       //TODO
-    }, onError: (){
+      print("Multicast Done in Server");
+    }, onError: (e){
       //TODO
+      print("Multicast Error in Server: $e");
     });
 
     _timer = Timer.periodic(Duration(seconds: 1), (_) {
@@ -117,9 +133,9 @@ class Server extends Host{
         // TODO send the name of this device and the listening port for reliable
         //connection along wih the PING
         _multicastSocket.send(
-          Packet.from("PING").bytes,
+          Packet.from("PING|$name|$_socketPort").bytes,
           InternetAddress(_multicastGroupIP),
-          _port,
+          _multicastPort,
         );
       }
     });
@@ -137,7 +153,7 @@ class Server extends Host{
       _multicastSocket.send(
           packet.bytes,
           InternetAddress(_ipAddress.split(".").sublist(0, 3).join(".") + ".255"),
-          _port
+          _multicastPort
       );
     }
     else if( _serverSocket != null && reliable ){ // reliable broadcast
@@ -145,6 +161,7 @@ class Server extends Host{
     }
   }
 
+  int get port => _socketPort;
   bool get running => _running;
 
   @override

@@ -22,24 +22,36 @@ class Device{
     assert(port != null);
   }
 
+  /// Get the IP address registered for this host
   String get ip => _ip;
+  /// Get the communication port registered for this host
   int get port => _port;
+  /// Get the name reported for this Device. This value may be the text "null"
+  /// if the Host name was not set in the Server or Client.
   String get name => _name;
+  /// Set a name for this Device.
   set name(String name) => _name = name ?? _UNKNOWN_DEVICE;
 
-  // For now devices are unique based on their IP addresses irrespective of ports
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Device && runtimeType == other.runtimeType && _ip == other._ip;
-
-  @override
-  int get hashCode => _ip.hashCode;
-
+  // Internal method used to set the connection state of this Device
   set _connected(Socket socket){
     _socket = socket;
     _isConnected = _socket != null;
   }
 
+  /// Used to determine if messages can be sent to this host
   bool get connected => _socket != null && _isConnected;
+
+  // For now devices are unique based on their IP addresses irrespective of ports
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+          other is Device && runtimeType == other.runtimeType && _ip == other._ip;
+
+  @override
+  int get hashCode => _ip.hashCode;
+
+  @override
+  String toString() {
+    return 'Device{ip: $_ip, port: $_port, name: $_name}';
+  }
 }

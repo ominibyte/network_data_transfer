@@ -21,7 +21,7 @@ abstract class Host{
   static const String DEFAULT_MULTICAST_GROUP_IP = "225.225.225.225";
   // TODO later we can allow a range of ports to listen on for discovery
   // The actual multicast discovery port to listen on.
-  int _port;
+  int _multicastPort;
   IPVersion _ipVersion;
   RawDatagramSocket _multicastSocket;
   Completer<bool> _readyCompleter = Completer();
@@ -34,20 +34,17 @@ abstract class Host{
   ConnectionListener _connectionListener;
   String _name; // A name/identifier to give this host
 
-  Host({String name, int multicastPort = DEFAULT_MULTICAST_PORT, String multicastGroupIP = DEFAULT_MULTICAST_GROUP_IP,
-    IPVersion ipVersion = IPVersion.any, DeviceDiscoveryListener deviceDiscoveryListener, ConnectionListener connectionListener}){
-    assert(multicastPort != null);
-    assert(multicastGroupIP != null);
-    assert(ipVersion != null);
-    assert(_multicastGroupIsValid(multicastGroupIP));
-
-    _name = name;
-    _port = multicastPort;
-    _ipVersion = ipVersion;
-    _multicastGroupIP = multicastGroupIP;
+  Host({String name, int multicastPort, String multicastGroupIP, IPVersion ipVersion,
+    DeviceDiscoveryListener deviceDiscoveryListener, ConnectionListener connectionListener}){
+    _name = name?.replaceAll("|", "_");
+    _multicastPort = multicastPort ?? DEFAULT_MULTICAST_PORT;
+    _ipVersion = ipVersion ?? IPVersion.any;
+    _multicastGroupIP = multicastGroupIP ?? DEFAULT_MULTICAST_GROUP_IP;
     _discoveryListener = deviceDiscoveryListener;
     _connectionListener = connectionListener;
     _discoveredDevices = Set();
+
+    assert(_multicastGroupIsValid(multicastGroupIP), "multicastGroupIP is not valid!");
   }
 
   bool _multicastGroupIsValid(String ip){
@@ -63,11 +60,11 @@ abstract class Host{
         && parts.sublist(1).every((part) => int.parse(part) == 0));
   }
 
-  // Hosts can send messages to other devices using the internal socket
-  // contained in the Device
+  /// Hosts can send messages to other devices using the internal socket
+  /// contained in the Device
   send(Packet packet, Device device) async{
     // check if we have a socket for the device
-    if( device.connected && device._socket != null ) {
+    if( device.connected ) {
       if( packet.isStream ) {
         await device._socket.addStream(packet.stream);
         await device._socket.flush();
@@ -77,17 +74,29 @@ abstract class Host{
         await device._socket.flush();
       }
     }
+    else
+      throw "Cannot send message. There is no socket connection to this Device.";
   }
 
 
   /// Get the first IP address we find.
-  Future<void> _findFirstIPAddress() async =>
+  Future<void> _findFirstIPAddress() async {
     _ipAddress = (await (_ipVersion == IPVersion.any ? ipAddresses :
-      _ipVersion == IPVersion.v4 ? ipv4Addresses : ipv6Addresses)).first;
+        _ipVersion == IPVersion.v4 ? ipv4Addresses : ipv6Addresses)).first;
+  }
 
 
   /// If this device is ready to
   Future<bool> get ready => _readyCompleter.future;
+
+  /// Get the detected IP address
+  String get ipAddress => _ipAddress;
+
+  /// Get the multicast Group IP Address
+  String get multicastIPAddress => _multicastGroupIP;
+
+  /// Get the multicast port
+  int get multicastPort => _multicastPort;
 
   /// Get all IP addresses for all IP versions
   Future<Iterable<String>> get ipAddresses async => _getAddresses(InternetAddressType.any);
@@ -107,7 +116,10 @@ abstract class Host{
         .map((address) => address.address);
   }
 
+  /// Set the name of this Host. Useful for identification purposes. This will be
+  /// sent to all other communicating devices as the name of the host
   set name (String name) => _name = name;
+  /// Get the name of this Host. Must have been set using the set property or constructor
   String get name => _name;
 
   void disconnect();
