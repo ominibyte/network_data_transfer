@@ -4,6 +4,9 @@ class Client extends Host{
   Socket _socket;
   bool _connected;
 
+  /**
+   * See [Host] for explanation on all the common options.
+   */
   Client({String name, int multicastPort, String multicastGroupIP, IPVersion ipVersion,
     DeviceDiscoveryListener deviceDiscoveryListener, ConnectionListener connectionListener})
       : super(name: name, multicastPort: multicastPort, multicastGroupIP : multicastGroupIP, ipVersion: ipVersion,
@@ -23,14 +26,28 @@ class Client extends Host{
         });
   }
 
-  /// client searches for AP hosts (Servers)
-  Future<void> discoverHosts() async{
+  /// Client searches for AP hosts (Servers).
+  /// The Client joins a multicast group to listens for advertisements.
+  ///
+  /// [precondition] is an optional Check you can specify the Client to make
+  /// before continuing. This is useful if there is some long running task that
+  /// must be satisfied before the client begins host discovery. [precondition],
+  /// if specified must return a boolean value. On some hosts, you may need to
+  /// prepare the system to intercept any messages from the multicast group which
+  /// is an example of how the optional parameter can be used to handle such requirement
+  Future<void> discoverHosts([Future<bool> precondition]) async{
+    if( precondition != null && !await precondition )
+      return;
+
+    // Disconnect just in case we were previously connected to one.
+    _disconnectFromMulticastGroup();
+
     _multicastSocket = await RawDatagramSocket.bind(
         _ipVersion == IPVersion.any ? InternetAddressType.any :
         _ipVersion == IPVersion.v4 ? InternetAddress.anyIPv4 :
         InternetAddress.anyIPv6,
         _multicastPort, // _multicastPort or 0
-        reusePort: true)
+        reusePort: false)
       ..broadcastEnabled = true;
     _multicastSocket.readEventsEnabled = true;
     _multicastSocket.joinMulticast( InternetAddress( _multicastGroupIP ) );
@@ -38,7 +55,7 @@ class Client extends Host{
       if (event == RawSocketEvent.read) {
         Datagram datagram = _multicastSocket.receive();
         if (datagram != null && Packet.from(datagram.data).as<String>().startsWith("PING")) {
-          //TODO send the name of the device along side the response
+          // send the name of the host along side the response
           _multicastSocket.send(
             Packet.from("PONG|$name").bytes,
             datagram.address,
@@ -59,12 +76,12 @@ class Client extends Host{
         }
       }
     }, onDone: (){
-      //TODO
-      print("Multicast Done in Client");
-    }, onError: (e){
-      //TODO
-      print("Multicast Error in Client: $e");
-    });
+      _disconnectFromMulticastGroup();
+      _discoveryListener?.onClose(false, null, null);
+    }, onError: (Object error, StackTrace stackTrace){
+      _disconnectFromMulticastGroup();
+      _discoveryListener?.onClose(true, error, stackTrace);
+    }, cancelOnError: true);
   }
 
   /// The client can connect to the Server that is already listening for connection.
@@ -89,19 +106,19 @@ class Client extends Host{
     _socket.listen((event) {
       _connectionListener?.onMessage(Packet.fromBytes(event), device);
     }, onDone: (){
-      _socket.destroy();
-      device._connected = null;
+      // _socket.destroy();
+      // device._connected = null;
+      // _connected = false;
       // fire disconnection listener
-      _connectionListener?.onDisconnected(device);
-      _connected = false;
-      print("Socket Done in Client");
-    }, onError: (e){
-      _socket.destroy();
-      device._connected = null;
+      _connectionListener?.onDisconnected(device, false, null, null);
+      disconnect(); // disconnect from everything
+    }, onError: (Object error, StackTrace stackTrace){
+      // _socket.destroy();
+      // device._connected = null;
+      // _connected = false;
       // fire disconnection listener
-      _connectionListener?.onDisconnected(device);
-      _connected = false;
-      print("Socket Error in Client: $e");
+      _connectionListener?.onDisconnected(device, true, error, stackTrace);
+      disconnect(); // disconnect from everything
     }, cancelOnError: true);
   }
 
@@ -109,9 +126,14 @@ class Client extends Host{
 
   @override
   void disconnect() async{
+    _disconnectFromMulticastGroup();
+    _disconnectFromServer();
+    _discoveredDevices.clear(); // remove all devices found (which should just be one)
+  }
+
+  void _disconnectFromMulticastGroup(){
     _multicastSocket?.leaveMulticast(InternetAddress( _multicastGroupIP ));
     _multicastSocket?.close();
-    _disconnectFromServer();
   }
 
   void _disconnectFromServer() async{

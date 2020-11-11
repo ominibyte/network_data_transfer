@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:html';
 
 import 'dart:io';
 import 'dart:math' as Math;
@@ -27,16 +28,38 @@ abstract class Host{
   Completer<bool> _readyCompleter = Completer();
   String _ipAddress;  // The IP address for this host which we will be using
   Set<Device> _discoveredDevices; // Devices that we find during the discovery/handshake
-  Map<Device, Socket> _devices;  // These are devices which have connected to us
   Timer _timer;
   String _multicastGroupIP;
   DeviceDiscoveryListener _discoveryListener;
   ConnectionListener _connectionListener;
   String _name; // A name/identifier to give this host
 
+  /**
+   * [name] is useful for host/device identification purposes especially if discovery
+   * is enabled. If you specify a name, the name will be sent to communicating devices
+   * to add as a user friendly name during discovery.
+   *
+   * You can specify a [multicastPort] if you want to use something else instead
+   * of the default 5018. This is the port that the multicast group will be listening on.
+   * You only need to set this if you plan to enable device discovery and advertisements.
+   *
+   * [multicastGroupIP] is the Multicast IP address for the multicast group. The
+   * default is 225.225.225.225 but it can be changed to a valid multicast address.
+   * assert is used to validate the multicast address which should be in the
+   * range: 224.0.0.0 to 239.255.255.255 (actually 224.0.0.1 to 239.255.255.254)
+   *
+   * [ipVersion] is the version of IP to use for all addresses. Options are:
+   * IPVersion.any, IPVersion.v4, and IPVersion.v6
+   *
+   * If you enable discovery, you should provide a [DeviceDiscoveryListener]
+   * option to receive connection and disconnection events.
+   *
+   * You should normally provide a [ConnectionListener] to receive events on
+   * connection and disconnection.
+   */
   Host({String name, int multicastPort, String multicastGroupIP, IPVersion ipVersion,
     DeviceDiscoveryListener deviceDiscoveryListener, ConnectionListener connectionListener}){
-    _name = name?.replaceAll("|", "_");
+    _name = name?.replaceAll("|", "_") ?? "<Unknown Host>";
     _multicastPort = multicastPort ?? DEFAULT_MULTICAST_PORT;
     _ipVersion = ipVersion ?? IPVersion.any;
     _multicastGroupIP = multicastGroupIP ?? DEFAULT_MULTICAST_GROUP_IP;
@@ -61,8 +84,12 @@ abstract class Host{
   }
 
   /// Hosts can send messages to other devices using the internal socket
-  /// contained in the Device
-  send(Packet packet, Device device) async{
+  /// contained in the Device.
+  ///
+  /// When [ignoreIfNotConnected] is set to true, If the device is not connected,
+  /// it will be silently ignore. If however the value is false which is the
+  /// default, an Exception will be thrown.
+  send(Packet packet, Device device, {bool ignoreIfNotConnected = false}) async{
     // check if we have a socket for the device
     if( device.connected ) {
       if( packet.isStream ) {
@@ -74,7 +101,7 @@ abstract class Host{
         await device._socket.flush();
       }
     }
-    else
+    else if( !ignoreIfNotConnected )
       throw "Cannot send message. There is no socket connection to this Device.";
   }
 

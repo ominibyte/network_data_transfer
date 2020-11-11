@@ -26,6 +26,9 @@ class MyDiscoveryListener implements DeviceDiscoveryListener{
     print("New Client Device Alert: $newDevice");
     devices = allDevices;
   }
+
+  @override
+  onClose(bool isError, Object error, StackTrace stackTrace){}
 }
 
 class MyConnectionListener implements ConnectionListener{
@@ -37,7 +40,7 @@ class MyConnectionListener implements ConnectionListener{
   }
 
   @override
-  void onDisconnected(Device device) {
+  void onDisconnected(Device device, bool isError, Object error, StackTrace stackTrace) {
     print("Device Disconnected from Server: $device");
   }
 

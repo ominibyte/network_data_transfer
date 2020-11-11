@@ -6,14 +6,38 @@ class Server extends Host{
   ServerSocket _serverSocket;
   int _socketPort;  // The port where this server will be listening for reliable communication
   bool _running;
+  bool _enableDiscovery;
+  // If the user wants to choose the IP address which the Server will listen on,
+  // this is the callback that will be used
+  ListenOn _listenOn;
 
+  /**
+   * [listenOn] Allows you to provide the IP address the server should listen on
+   * for Client connections. If none is provided, the Server will listen on all
+   * IP address found for the supplied [ipVersion]
+   *
+   * [enableDiscovery] is used to inform the Server to broadcast advertisements
+   * to a multicast group which will be joined by Clients to allow dynamic port
+   * discovery. This means, you would not need to supply a value for [serverSocketPort]
+   * because the Server will ask the operating system to provide an available port which it
+   * will communicate with the discovered Clients and which the Clients will use for
+   * socket connection with the Server.
+   *
+   * If [serverSocketPort] is specified, the Server will listen on the port specified
+   * else it will ask the operating system for a free port which will be used.
+   * You should normally specify a [serverSocketPort] if [enableDiscovery] is set to false.
+   *
+   * See [Host] for explanation on other common options.
+   */
   Server({String name, int multicastPort, String multicastGroupIP, IPVersion ipVersion,
     DeviceDiscoveryListener deviceDiscoveryListener, ConnectionListener connectionListener,
-    int serverSocketPort})
+    int serverSocketPort, bool enableDiscovery = true, ListenOn listenOn})
       : super(name: name, multicastPort: multicastPort, multicastGroupIP : multicastGroupIP,
         ipVersion: ipVersion, deviceDiscoveryListener : deviceDiscoveryListener,
         connectionListener : connectionListener){
     _socketPort = serverSocketPort ?? 0;
+    _enableDiscovery = enableDiscovery;
+    _listenOn = listenOn;
     // check that the port is within a valid range
     if( _socketPort != 0 ){
       assert(_socketPort > 1024);
@@ -33,8 +57,17 @@ class Server extends Host{
     // next, start listening for connections on the socket port
     // before enabling discovery from clients.
     return _findFirstIPAddress()
+        .then((_){
+          // check if the user wants us to listen on a particular address
+          if( _listenOn != null ){
+            return _listenOn(_ipVersion == IPVersion.any ? ipAddresses
+                : _ipVersion == IPVersion.v4 ? ipv4Addresses : ipv6Addresses);
+          }
+          return Future.value(_ipAddress);
+        })
+        .then((ip) => _ipAddress = ip)
         .then((_) => _listenForConnections())
-        .then((_) => _enableDiscovery())
+        .then((_) => _enableDiscovery ? _startAdvertisement() : null)
         .then<void>((_){
           if( !_readyCompleter.isCompleted )
             _readyCompleter.complete(true);
@@ -46,7 +79,9 @@ class Server extends Host{
 
   // server automatically listens for client incoming connections
   Future<void> _listenForConnections() async{
-    _serverSocket = await ServerSocket.bind(_ipAddress, _socketPort);
+    _serverSocket = await ServerSocket.bind(_listenOn == null ? (_ipVersion == IPVersion.any ? InternetAddressType.any :
+      _ipVersion == IPVersion.v4 ? InternetAddress.anyIPv4 :
+      InternetAddress.anyIPv6) : _ipAddress, _socketPort);
     // Update the port just in case no port was specified for connection
     _socketPort = _serverSocket.port;
     _serverSocket.listen(
@@ -87,26 +122,28 @@ class Server extends Host{
       socket.destroy();
       device._connected = null;
       // fire disconnection listener
-      _connectionListener?.onDisconnected(device);
-      print("Socket Done in Server");
-    },onError: (e){
+      _connectionListener?.onDisconnected(device, false, null, null);
+    },onError: (Object error, StackTrace stackTrace){
       socket.destroy();
       device._connected = null;
       // fire disconnection listener
-      _connectionListener?.onDisconnected(device);
-      print("Socket Error in Server: $e");
+      _connectionListener?.onDisconnected(device, false, error, stackTrace);
     }, cancelOnError: true);
   }
 
-  Future<void> _enableDiscovery() async {
+  Future<void> _startAdvertisement() async {
+    // Stop discovery if we happen to already be advertising
+    stopDiscovery();
+
     _multicastSocket = await RawDatagramSocket.bind(
         _ipVersion == IPVersion.any ? InternetAddressType.any :
         _ipVersion == IPVersion.v4 ? InternetAddress.anyIPv4 :
         InternetAddress.anyIPv6,
         0, // _multicastPort or 0
-        reusePort: true)
+        reusePort: false)
       ..broadcastEnabled = true;
     _multicastSocket.readEventsEnabled = true;
+
     _multicastSocket.listen((event) {
       if (event == RawSocketEvent.read) {
         Datagram datagram = _multicastSocket.receive();
@@ -121,17 +158,17 @@ class Server extends Host{
         }
       }
     }, onDone: (){
-      //TODO
-      print("Multicast Done in Server");
-    }, onError: (e){
-      //TODO
-      print("Multicast Error in Server: $e");
+      stopDiscovery();
+      _discoveryListener?.onClose(false, null, null);
+    }, onError: (Object error, StackTrace stackTrace){
+      stopDiscovery();
+      _discoveryListener?.onClose(true, error, stackTrace);
     });
 
     _timer = Timer.periodic(Duration(seconds: 1), (_) {
       if ( _timer.isActive ) {
-        // TODO send the name of this device and the listening port for reliable
-        //connection along wih the PING
+        // send the name of this host and the listening port for reliable
+        //connection along with the PING message
         _multicastSocket.send(
           Packet.from("PING|$name|$_socketPort").bytes,
           InternetAddress(_multicastGroupIP),
@@ -157,18 +194,42 @@ class Server extends Host{
       );
     }
     else if( _serverSocket != null && reliable ){ // reliable broadcast
-      //TODO send reliable broadcast using all connected client sockets
+      // send reliable broadcast using all connected client sockets
+      for(Device device in _discoveredDevices)
+        send(packet, device, ignoreIfNotConnected: true);
     }
   }
 
   int get port => _socketPort;
   bool get running => _running;
 
+  /// Shutdown the Server by Disconnecting from all sockets
   @override
   void disconnect() async{
-    _timer?.cancel();
-    _multicastSocket?.close();
+    stopDiscovery();
     await _serverSocket?.close();
     _running = false;
+    _discoveredDevices.clear(); // remove all devices found
+  }
+
+  /// (Re)Start advertisements from this server to enable discovery on Clients
+  void startDiscovery() async => await _startAdvertisement();
+
+  /// Stop this Server from Advertising for Client discovery
+  void stopDiscovery(){
+    _timer?.cancel();
+    _timer = null;
+    _multicastSocket?.close();
+    _multicastSocket = null;
   }
 }
+
+/// For the socket connection to the Server, this allows you to specify the IP address
+/// which the Server should listen on.
+///
+/// Based on the IPVersion passed to the Server (defaults to all), you will receive
+/// [ipAddresses] which will give all IP addresses found. You can decide to choose
+/// and return one of them which the Server will then use for listening for client
+/// connections. If the ListenOn option is not specified during the creation of the
+/// Server, the Server will listen on all of [ipAddresses]
+typedef ListenOn = Future<String> Function(Future<Iterable<String>> ipAddresses);

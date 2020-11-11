@@ -33,6 +33,9 @@ class MyDiscoveryListener implements DeviceDiscoveryListener{
     // Connect to Server
     client.connectTo(newDevice);
   }
+
+  @override
+  onClose(bool isError, Object error, StackTrace stackTrace){}
 }
 
 class MyConnectionListener implements ConnectionListener{
@@ -42,7 +45,7 @@ class MyConnectionListener implements ConnectionListener{
   }
 
   @override
-  void onDisconnected(Device device) {
+  void onDisconnected(Device device, bool isError, Object error, StackTrace stackTrace) {
     print("Server Disconnected: $device");
   }
 
