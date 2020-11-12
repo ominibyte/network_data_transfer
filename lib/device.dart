@@ -1,7 +1,20 @@
 part of 'host.dart';
 
-/// A device has an IP address and can listen on a port for connections if it functions as an AP.
+/// A Device has an IP address and connects over a port.
 /// The design does not currently allow multiple connections using different ports from the same device.
+///
+/// A Device could have a name manually set or could take the name of the Host
+/// from which it was created from if the Host set a name.
+///
+/// You can send a message to a Device from the Client or Server. Before sending,
+/// check that the Device has been connected using the [connected] property. When
+/// a Device has just been discovered, it is in an unconnected state. The Client
+/// must [Client.connectTo] the Device which if successful, the Device will be
+/// in a connected state. After that, messages can be sent to the Device.
+///
+/// A Host maintains an internal socket with a Device it has connected to. You
+/// should not have access to the raw socket. Messages are sent as [Packet]s which
+/// can handle several serializable formats. See [Packet] for more information.
 class Device{
   final String _ip; // The device IP address
   final int _port;  // The listening port

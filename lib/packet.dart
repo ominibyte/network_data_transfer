@@ -1,7 +1,19 @@
 part of 'host.dart';
 
 /// This class models the raw data that needs to be sent or received over the network.
-/// and is just a wrapper around the raw bytes
+/// and is just a wrapper around the raw bytes/stream.
+///
+/// Packets can serialize and deserialize formats supported by [jsonEncode] using
+/// [Packet.from]. When using [Packet.from], it assumes that the enclosed data is
+/// safe for utf8 encoding and decoding.
+///
+/// If you want to create a Packet from raw bytes, you have two options:
+/// 1. If you already know all the bytes, you can use [Packet.fromBytes].
+/// 2. If you don't yet have all of the bytes, you can use the Packet
+///   constructor and keep adding bytes using the [add] or [addAll] methods
+///
+/// If you want to create a Packet from stream, use the [Packet.fromStream]
+/// constructor.
 class Packet{
   List<int> _bytes; // The raw bytes
   Stream<List<int>> _stream;
@@ -28,6 +40,8 @@ class Packet{
       content = jsonEncode(data);
     else if( data is num )
       content = data.toString();
+    else if( data is bool )
+      content = "$data";
     else
       throw new Exception("Unsupported data type. Serialize to one of the supported formats");
 
@@ -95,6 +109,8 @@ class Packet{
       return asDouble() as E;
     else if( E == num )
       return asNumber() as E;
+    else if( E == bool )
+      return asBool() as E;
 
     throw new Exception("Unsupported return type. Deserialize to one of the supported formats");
   }
@@ -127,5 +143,10 @@ class Packet{
   double asDouble(){
     assert(_isStream != null && !_isStream);
     return double.parse(asString());
+  }
+
+  bool asBool(){
+    assert(_isStream != null && !_isStream);
+    return asString() == "true";
   }
 }

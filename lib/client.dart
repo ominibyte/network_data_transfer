@@ -1,5 +1,6 @@
 part of 'host.dart';
 
+/// A Client connects to a Server and can discover Servers listening on the network
 class Client extends Host{
   Socket _socket;
   bool _connected;

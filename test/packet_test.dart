@@ -1,4 +1,4 @@
-import 'package:network_data_transfer/src/host.dart';
+import 'package:network_data_transfer/host.dart';
 import 'package:test/test.dart';
 
 void main(){
@@ -13,6 +13,16 @@ void main(){
       final value = 98;
       Packet packet = Packet.from(value);
       expect(packet.as<int>(), equals(value));
+    });
+
+    test("Boolean", (){
+      bool value = false;
+      Packet packet = Packet.from(value);
+      expect(packet.as<bool>(), equals(value));
+
+      value = true;
+      packet = Packet.from(value);
+      expect(packet.as<bool>(), equals(value));
     });
 
     test("List of strings", (){

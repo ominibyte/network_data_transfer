@@ -1,7 +1,8 @@
+library network_data_transfer;
+
 import 'dart:async';
 
 import 'dart:io';
-import 'dart:math' as Math;
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -12,8 +13,8 @@ part 'device_discover_listener.dart';
 part 'connection_listener.dart';
 part 'packet.dart';
 
-/// A Host is a generic station (STA) in the network.
-/// A Client and a Server are both hosts
+/// A Host is a generic endpoint (STA/AP) in the network.
+/// A Client and a Server are both hosts.
 abstract class Host{
   // The default discovery port to listen on if the user does not specify any
   static const int DEFAULT_MULTICAST_PORT = 5018;

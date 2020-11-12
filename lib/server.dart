@@ -1,7 +1,6 @@
 part of 'host.dart';
 
-/// A server listens for connections and keeps a list of all the
-/// connected devices
+/// A Server listens for connections and keeps a list of all the connected devices
 class Server extends Host{
   ServerSocket _serverSocket;
   int _socketPort;  // The port where this server will be listening for reliable communication
@@ -165,6 +164,10 @@ class Server extends Host{
       _discoveryListener?.onClose(true, error, stackTrace);
     });
 
+    _startAdvertisementTimer();
+  }
+
+  void _startAdvertisementTimer(){
     _timer = Timer.periodic(Duration(seconds: 1), (_) {
       if ( _timer.isActive ) {
         // send the name of this host and the listening port for reliable
@@ -215,13 +218,27 @@ class Server extends Host{
   /// (Re)Start advertisements from this server to enable discovery on Clients
   void startDiscovery() async => await _startAdvertisement();
 
+  /// This allows pausing the discovery advertisements
+  void pauseDiscovery() => _stopAdvertisementTimer();
+
+  /// You can resumed a paused discovery advertisement
+  void resumeDiscovery(){
+    if( _timer == null || !_timer.isActive )
+      _startAdvertisement();
+  }
+
   /// Stop this Server from Advertising for Client discovery
   void stopDiscovery(){
-    _timer?.cancel();
-    _timer = null;
+    _stopAdvertisementTimer();
     _multicastSocket?.close();
     _multicastSocket = null;
   }
+
+  void _stopAdvertisementTimer(){
+    _timer?.cancel();
+    _timer = null;
+  }
+
 }
 
 /// For the socket connection to the Server, this allows you to specify the IP address

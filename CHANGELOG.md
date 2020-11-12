@@ -1,3 +1,7 @@
+## [0.0.1] - 2020-11-11
+
+* The release of the first non-dev version
+
 ## [0.0.1-dev.2] - 2020-11-10
 
 * Communication between Server and Client up and running

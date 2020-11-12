@@ -1,4 +1,4 @@
-import 'package:network_data_transfer/src/host.dart';
+import 'package:network_data_transfer/host.dart';
 import 'package:english_words/english_words.dart';
 
 Iterable<Device> devices;
