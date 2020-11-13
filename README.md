@@ -90,8 +90,7 @@ void main() async{
     ipVersion: IPVersion.v4,
     name: "Server",
     deviceDiscoveryListener: MyDiscoveryListener(),
-    connectionListener: MyConnectionListener(),
-    listenOn: useFirstFoundIP // Optional. Do not provide to listen on all ip addresses
+    connectionListener: MyConnectionListener()
   );
 
   if(!await server.ready){
@@ -99,11 +98,6 @@ void main() async{
     return;
   }
   print("Server is ready at ${server.ipAddress}:${server.port}");
-}
-
-Future<String> useFirstFoundIP(Future<Iterable<String>> ips) async{
-  Iterable<String> ipAddresses = await ips;
-  return ipAddresses.first;
 }
 
 class MyDiscoveryListener implements DeviceDiscoveryListener{

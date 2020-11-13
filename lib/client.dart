@@ -10,7 +10,8 @@ class Client extends Host{
    */
   Client({String name, int multicastPort, String multicastGroupIP, IPVersion ipVersion,
     DeviceDiscoveryListener deviceDiscoveryListener, ConnectionListener connectionListener})
-      : super(name: name, multicastPort: multicastPort, multicastGroupIP : multicastGroupIP, ipVersion: ipVersion,
+      : super(name: name ?? "Client ${Random().nextInt(1000) + 1}", multicastPort: multicastPort,
+          multicastGroupIP : multicastGroupIP, ipVersion: ipVersion,
           deviceDiscoveryListener : deviceDiscoveryListener, connectionListener: connectionListener){
     _connected = false;
     _init();
@@ -29,6 +30,8 @@ class Client extends Host{
 
   /// Client searches for AP hosts (Servers).
   /// The Client joins a multicast group to listens for advertisements.
+  /// This method returns boolean future that indicates if the client was able to
+  /// join the multicast group.
   ///
   /// [precondition] is an optional Check you can specify the Client to make
   /// before continuing. This is useful if there is some long running task that
@@ -36,22 +39,27 @@ class Client extends Host{
   /// if specified must return a boolean value. On some hosts, you may need to
   /// prepare the system to intercept any messages from the multicast group which
   /// is an example of how the optional parameter can be used to handle such requirement
-  Future<void> discoverHosts([Future<bool> precondition]) async{
+  Future<bool> discoverHosts([Future<bool> precondition]) async{
     if( precondition != null && !await precondition )
-      return;
+      return false;
 
     // Disconnect just in case we were previously connected to one.
-    _disconnectFromMulticastGroup();
+    await _disconnectFromMulticastGroup();
 
-    _multicastSocket = await RawDatagramSocket.bind(
-        _ipVersion == IPVersion.any ? InternetAddressType.any :
-        _ipVersion == IPVersion.v4 ? InternetAddress.anyIPv4 :
-        InternetAddress.anyIPv6,
-        _multicastPort, // _multicastPort or 0
-        reusePort: false)
-      ..broadcastEnabled = true;
-    _multicastSocket.readEventsEnabled = true;
-    _multicastSocket.joinMulticast( InternetAddress( _multicastGroupIP ) );
+    if( !await _multicastConnect(_multicastPort) )
+      return false;
+
+    for(NetworkInterface interface in await interfaces) {
+      //TODO we should only connect to the interface with the right multicast group
+      // IP version. Right now, the user can only specify just one multicast IP and
+      // that can either be v4 or v6. If IPVersion.anny is chosen then we may find
+      // ourselves using one IP version for the other
+      try {
+        _multicastSocket.joinMulticast(InternetAddress(_multicastGroupIP), interface);
+      }
+      catch(ignored){}
+    }
+
     _multicastSocket.listen((event) {
       if (event == RawSocketEvent.read) {
         Datagram datagram = _multicastSocket.receive();
@@ -76,13 +84,15 @@ class Client extends Host{
           }
         }
       }
-    }, onDone: (){
-      _disconnectFromMulticastGroup();
+    }, onDone: () async{
+      await _disconnectFromMulticastGroup();
       _discoveryListener?.onClose(false, null, null);
-    }, onError: (Object error, StackTrace stackTrace){
-      _disconnectFromMulticastGroup();
+    }, onError: (Object error, StackTrace stackTrace) async{
+      await _disconnectFromMulticastGroup();
       _discoveryListener?.onClose(true, error, stackTrace);
     }, cancelOnError: true);
+
+    return true;
   }
 
   /// The client can connect to the Server that is already listening for connection.
@@ -95,10 +105,17 @@ class Client extends Host{
     await _disconnectFromServer();
 
     // Use the detected IP address to connect to the server
-    _socket = await Socket.connect(device.ip, device.port, sourceAddress: ipAddress ?? _ipAddress);
-    if( _socket == null )
-      throw "Could not connect to the Server at ${device.ip}:${device.port}. Please try again later.";
+    try {
+      _socket = await Socket.connect(device.ip, device.port,
+          sourceAddress: ipAddress ?? _ipAddress);
+    }
+    catch(error, stackTrace){
+      _connectionListener?.onDisconnected(device, true, error, stackTrace);
+      disconnect();
+      return;
+    }
     _connected = true;
+
     device._isConnected = true;
     device._socket = _socket;
     // fire connection listener
@@ -106,34 +123,37 @@ class Client extends Host{
 
     _socket.listen((event) {
       _connectionListener?.onMessage(Packet.fromBytes(event), device);
-    }, onDone: (){
-      // _socket.destroy();
-      // device._connected = null;
-      // _connected = false;
+    }, onDone: () async{
+      await disconnect(); // disconnect from everything
       // fire disconnection listener
       _connectionListener?.onDisconnected(device, false, null, null);
-      disconnect(); // disconnect from everything
-    }, onError: (Object error, StackTrace stackTrace){
-      // _socket.destroy();
-      // device._connected = null;
-      // _connected = false;
+    }, onError: (Object error, StackTrace stackTrace) async{
+      await disconnect(); // disconnect from everything
       // fire disconnection listener
       _connectionListener?.onDisconnected(device, true, error, stackTrace);
-      disconnect(); // disconnect from everything
     }, cancelOnError: true);
   }
 
   bool get connected => _connected;
 
   @override
-  void disconnect() async{
-    _disconnectFromMulticastGroup();
+  Future<void> disconnect() async{
+    await _disconnectFromMulticastGroup();
     _disconnectFromServer();
     _discoveredDevices.clear(); // remove all devices found (which should just be one)
   }
 
-  void _disconnectFromMulticastGroup(){
-    _multicastSocket?.leaveMulticast(InternetAddress( _multicastGroupIP ));
+  void _disconnectFromMulticastGroup() async{
+    for(NetworkInterface interface in await interfaces) {
+      //TODO we should only connect to the interface with the right multicast group
+      // IP version. Right now, the user can only specify just one multicast IP and
+      // that can either be v4 or v6. If IPVersion.anny is chosen then we may find
+      // ourselves using one IP version for the other
+      try {
+        _multicastSocket.leaveMulticast(InternetAddress(_multicastGroupIP), interface);
+      }
+      catch(ignored){}
+    }
     _multicastSocket?.close();
   }
 

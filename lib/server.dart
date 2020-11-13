@@ -31,7 +31,7 @@ class Server extends Host{
   Server({String name, int multicastPort, String multicastGroupIP, IPVersion ipVersion,
     DeviceDiscoveryListener deviceDiscoveryListener, ConnectionListener connectionListener,
     int serverSocketPort, bool enableDiscovery = true, ListenOn listenOn})
-      : super(name: name, multicastPort: multicastPort, multicastGroupIP : multicastGroupIP,
+      : super(name: name ?? "Server", multicastPort: multicastPort, multicastGroupIP : multicastGroupIP,
         ipVersion: ipVersion, deviceDiscoveryListener : deviceDiscoveryListener,
         connectionListener : connectionListener){
     _socketPort = serverSocketPort ?? 0;
@@ -58,10 +58,9 @@ class Server extends Host{
     return _findFirstIPAddress()
         .then((_){
           // check if the user wants us to listen on a particular address
-          if( _listenOn != null ){
-            return _listenOn(_ipVersion == IPVersion.any ? ipAddresses
-                : _ipVersion == IPVersion.v4 ? ipv4Addresses : ipv6Addresses);
-          }
+          if( _listenOn != null )
+            return _listenOn(interfaceAddresses);
+
           return Future.value(_ipAddress);
         })
         .then((ip) => _ipAddress = ip)
@@ -78,20 +77,28 @@ class Server extends Host{
 
   // server automatically listens for client incoming connections
   Future<void> _listenForConnections() async{
-    _serverSocket = await ServerSocket.bind(_listenOn == null ? (_ipVersion == IPVersion.any ? InternetAddressType.any :
+    try{
+      _serverSocket = await ServerSocket.bind(_listenOn == null ? (_ipVersion == IPVersion.any ? InternetAddressType.any :
       _ipVersion == IPVersion.v4 ? InternetAddress.anyIPv4 :
       InternetAddress.anyIPv6) : _ipAddress, _socketPort);
+    }
+    catch(error, stackTrace){
+      _connectionListener?.onDisconnected(null, true, error, stackTrace);
+      return;
+    }
+    _running = true;
+
     // Update the port just in case no port was specified for connection
     _socketPort = _serverSocket.port;
     _serverSocket.listen(
       _processSocket,
-      onError: (e){
+      onError: (Object error, StackTrace stackTrace){
         _running = false;
-        print("Server Socket Error in Server: $e");
+        _connectionListener?.onDisconnected(null, false, error, stackTrace);
       },
       onDone: (){
         _running = false;
-        print("Server Socket Done in Server");
+        _connectionListener?.onDisconnected(null, false, null, null);
       },
       cancelOnError: true
     );
@@ -134,14 +141,8 @@ class Server extends Host{
     // Stop discovery if we happen to already be advertising
     stopDiscovery();
 
-    _multicastSocket = await RawDatagramSocket.bind(
-        _ipVersion == IPVersion.any ? InternetAddressType.any :
-        _ipVersion == IPVersion.v4 ? InternetAddress.anyIPv4 :
-        InternetAddress.anyIPv6,
-        0, // _multicastPort or 0
-        reusePort: false)
-      ..broadcastEnabled = true;
-    _multicastSocket.readEventsEnabled = true;
+    if( !await _multicastConnect(0) )
+      return;
 
     _multicastSocket.listen((event) {
       if (event == RawSocketEvent.read) {
@@ -162,8 +163,9 @@ class Server extends Host{
     }, onError: (Object error, StackTrace stackTrace){
       stopDiscovery();
       _discoveryListener?.onClose(true, error, stackTrace);
-    });
+    }, cancelOnError: false);
 
+    // Start the timer to send periodic messages on the multicast channel
     _startAdvertisementTimer();
   }
 
@@ -208,9 +210,14 @@ class Server extends Host{
 
   /// Shutdown the Server by Disconnecting from all sockets
   @override
-  void disconnect() async{
+  Future<void> disconnect() async{
     stopDiscovery();
     await _serverSocket?.close();
+    // disconnect with all the devices which we have open sockets with
+    for( Device device in _discoveredDevices ) {
+      await device._socket?.close();
+      device._socket?.destroy();
+    }
     _running = false;
     _discoveredDevices.clear(); // remove all devices found
   }
@@ -245,8 +252,9 @@ class Server extends Host{
 /// which the Server should listen on.
 ///
 /// Based on the IPVersion passed to the Server (defaults to all), you will receive
-/// [ipAddresses] which will give all IP addresses found. You can decide to choose
-/// and return one of them which the Server will then use for listening for client
-/// connections. If the ListenOn option is not specified during the creation of the
-/// Server, the Server will listen on all of [ipAddresses]
-typedef ListenOn = Future<String> Function(Future<Iterable<String>> ipAddresses);
+/// [interfaceAddresses] which will give all IP addresses found for all interfaces.
+/// You can decide to choose and return one IP address from all discovered.
+/// The chosen IP Address will be used by the Server to listen for client connections.
+/// If the ListenOn option is not specified during the creation of the
+/// Server, the Server will listen on all of the discovered IP addresses.
+typedef ListenOn = Future<String> Function(Future<Iterable<Map<NetworkInterface, Iterable<InternetAddress>>>> interfaceAddresses);

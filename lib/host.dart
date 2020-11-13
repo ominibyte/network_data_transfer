@@ -1,7 +1,7 @@
 library network_data_transfer;
 
 import 'dart:async';
-
+import 'dart:math';
 import 'dart:io';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -19,8 +19,8 @@ abstract class Host{
   // The default discovery port to listen on if the user does not specify any
   static const int DEFAULT_MULTICAST_PORT = 5018;
   // The multicast group the devices should join
-  static const String DEFAULT_MULTICAST_GROUP_IP = "225.225.225.225";
-  // TODO later we can allow a range of ports to listen on for discovery
+  static const String DEFAULT_MULTICAST_GROUP_IPV4 = "225.225.225.225";
+  static const String DEFAULT_MULTICAST_GROUP_IPV6 = "FF02::FB";
   // The actual multicast discovery port to listen on.
   int _multicastPort;
   IPVersion _ipVersion;
@@ -62,12 +62,14 @@ abstract class Host{
     _name = name?.replaceAll("|", "_") ?? "<Unknown Host>";
     _multicastPort = multicastPort ?? DEFAULT_MULTICAST_PORT;
     _ipVersion = ipVersion ?? IPVersion.any;
-    _multicastGroupIP = multicastGroupIP ?? DEFAULT_MULTICAST_GROUP_IP;
+    _multicastGroupIP = multicastGroupIP ??
+        (_ipVersion == IPVersion.any || _ipVersion == IPVersion.v4 ?
+          DEFAULT_MULTICAST_GROUP_IPV4 : DEFAULT_MULTICAST_GROUP_IPV6);
     _discoveryListener = deviceDiscoveryListener;
     _connectionListener = connectionListener;
     _discoveredDevices = Set();
 
-    assert(_multicastGroupIsValid(multicastGroupIP), "multicastGroupIP is not valid!");
+    assert(_multicastGroupIsValid(_multicastGroupIP), "multicastGroupIP is not valid!");
   }
 
   bool _multicastGroupIsValid(String ip){
@@ -83,6 +85,26 @@ abstract class Host{
         && parts.sublist(1).every((part) => int.parse(part) == 0));
   }
 
+  Future<bool> _multicastConnect(int port) async{
+    try {
+      _multicastSocket = await RawDatagramSocket.bind(
+          _ipVersion == IPVersion.any ? InternetAddressType.any :
+          _ipVersion == IPVersion.v4 ? InternetAddress.anyIPv4 :
+          InternetAddress.anyIPv6,
+          port, // _multicastPort or 0
+          reuseAddress: true,
+          reusePort: false)
+        ..broadcastEnabled = true
+        ..readEventsEnabled = true;
+
+      return true;
+    }
+    catch(error, stackTrace){
+      _discoveryListener?.onClose(true, error, stackTrace);
+      return false;
+    }
+  }
+
   /// Hosts can send messages to other devices using the internal socket
   /// contained in the Device.
   ///
@@ -90,19 +112,22 @@ abstract class Host{
   /// it will be silently ignore. If however the value is false which is the
   /// default, an Exception will be thrown.
   send(Packet packet, Device device, {bool ignoreIfNotConnected = false}) async{
-    // check if we have a socket for the device
-    if( device.connected ) {
-      if( packet.isStream ) {
-        await device._socket.addStream(packet.stream);
-        await device._socket.flush();
+    try {
+      // check if we have a socket for the device
+      if (device.connected) {
+        if (packet.isStream) {
+          await device._socket.addStream(packet.stream);
+          await device._socket.flush();
+        }
+        else {
+          await device._socket.add(packet.bytes);
+          await device._socket.flush();
+        }
       }
-      else{
-        await device._socket.add(packet.bytes);
-        await device._socket.flush();
-      }
+      else if (!ignoreIfNotConnected)
+        throw "Cannot send message. There is no socket connection to this Device.";
     }
-    else if( !ignoreIfNotConnected )
-      throw "Cannot send message. There is no socket connection to this Device.";
+    catch(ignored){}
   }
 
 
@@ -132,15 +157,39 @@ abstract class Host{
   /// Get all IP addresses for IPv6
   Future<Iterable<String>> get ipv6Addresses async => _getAddresses(InternetAddressType.IPv6);
 
+  Future<Iterable<Map<NetworkInterface, Iterable<InternetAddress>>>> get interfaceAddresses async{
+    List<Map<NetworkInterface, Iterable<InternetAddress>>> addresses = [];
+
+    for(NetworkInterface interface in await interfaces){
+      Map<NetworkInterface, Iterable<InternetAddress>> map = {};
+      map[interface] = interface.addresses;
+      addresses.add(map);
+    }
+
+    return addresses;
+  }
+
   /// Get all IP addresses for specified IP version.
   /// IP addresses are not cached because they could potentially be stale.
   Future<Iterable<String>> _getAddresses(InternetAddressType type) async{
     final interfaces = await NetworkInterface.list(includeLoopback: false,
         type: type);
 
+    //print("Found ${interfaces.length} interface(s)");
+
     return interfaces.where((interface) => interface != null)
         .expand((interface) => interface.addresses)
         .map((address) => address.address);
+  }
+
+  Future<List<NetworkInterface>> get interfaces{
+    InternetAddressType type = InternetAddressType.any;
+    if( _ipVersion == IPVersion.v4 )
+      type = InternetAddressType.IPv4;
+    else if( _ipVersion == IPVersion.v6 )
+      type = InternetAddressType.IPv6;
+
+    return NetworkInterface.list(includeLoopback: false, type: type);
   }
 
   /// Set the name of this Host. Useful for identification purposes. This will be
@@ -149,7 +198,7 @@ abstract class Host{
   /// Get the name of this Host. Must have been set using the set property or constructor
   String get name => _name;
 
-  void disconnect();
+  Future<void> disconnect();
 }
 
 /// The supported IP version to use

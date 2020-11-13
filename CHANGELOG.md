@@ -1,3 +1,8 @@
+## [0.0.2] - 2020-11-12
+
+* Bug fixes and stability. 
+* Tested communication across iOS and Android devices.
+
 ## [0.0.1] - 2020-11-11
 
 * The release of the first non-dev version

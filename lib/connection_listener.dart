@@ -16,6 +16,7 @@ abstract class ConnectionListener{
   /// will be false. If an error occurred, you can retrieve the error using
   /// [error]. [stackTrace] may be null is the error provider does not send one.
   /// [device] contains the object to the Device that was disconnected.
+  /// If [device] is null, this means that the Host was unable to start the socket.
   void onDisconnected(Device device, bool isError, Object error, StackTrace stackTrace);
 
   /// When a message is received from a [device], this method is called with

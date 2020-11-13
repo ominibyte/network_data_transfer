@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:network_data_transfer/host.dart';
 import 'package:english_words/english_words.dart';
 
@@ -20,9 +22,10 @@ void main() async{
   print("Server is ready at ${server.ipAddress}:${server.port}");
 }
 
-Future<String> useFirstFoundIP(Future<Iterable<String>> ips) async{
-  Iterable<String> ipAddresses = await ips;
-  return ipAddresses.first;
+// Use the first IP address we find for the first interface
+Future<String> useFirstFoundIP(Future<Iterable<Map<NetworkInterface, Iterable<InternetAddress>>>> interfaceAddresses) async{
+  Iterable<Map<NetworkInterface, Iterable<InternetAddress>>> addressList = await interfaceAddresses;
+  return addressList.first.values.first.first.address;
 }
 
 class MyDiscoveryListener implements DeviceDiscoveryListener{
