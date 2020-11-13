@@ -11,7 +11,7 @@ class Client extends Host{
   Client({String name, int multicastPort, String multicastGroupIP, IPVersion ipVersion,
     DeviceDiscoveryListener deviceDiscoveryListener, ConnectionListener connectionListener})
       : super(name: name ?? "Client ${Random().nextInt(1000) + 1}", multicastPort: multicastPort,
-          multicastGroupIP : multicastGroupIP, ipVersion: ipVersion,
+          ipVersion: ipVersion,
           deviceDiscoveryListener : deviceDiscoveryListener, connectionListener: connectionListener){
     _connected = false;
     _init();
@@ -49,11 +49,9 @@ class Client extends Host{
     if( !await _multicastConnect(_multicastPort) )
       return false;
 
+    // Go through all the interfaces and try to join the multicast group for
+    // that interface
     for(NetworkInterface interface in await interfaces) {
-      //TODO we should only connect to the interface with the right multicast group
-      // IP version. Right now, the user can only specify just one multicast IP and
-      // that can either be v4 or v6. If IPVersion.anny is chosen then we may find
-      // ourselves using one IP version for the other
       try {
         _multicastSocket.joinMulticast(InternetAddress(_multicastGroupIP), interface);
       }
@@ -83,6 +81,12 @@ class Client extends Host{
             _discoveryListener?.onDiscovery(device, _discoveredDevices);
           }
         }
+        else if( datagram != null ){
+          _discoveryListener?.onAdvertisement(
+            Device(datagram.address.address, datagram.port),
+            Packet.fromBytes(datagram.data)
+          );
+        }
       }
     }, onDone: () async{
       await _disconnectFromMulticastGroup();
@@ -95,6 +99,10 @@ class Client extends Host{
     return true;
   }
 
+  /// A way to stop the Client from further listening on multicast discovery messages.
+  /// This is particularly useful when you have found the host with the required service.
+  void stopDiscovery() => _disconnectFromMulticastGroup();
+
   /// The client can connect to the Server that is already listening for connection.
   /// [ipAddress] is the IP to use in connecting to the server if the default detected
   /// one is not the interface you want to use.
@@ -106,6 +114,7 @@ class Client extends Host{
 
     // Use the detected IP address to connect to the server
     try {
+      //TODO we need to figure out how to set the connecting interface
       _socket = await Socket.connect(device.ip, device.port,
           sourceAddress: ipAddress ?? _ipAddress);
     }
@@ -144,17 +153,15 @@ class Client extends Host{
   }
 
   void _disconnectFromMulticastGroup() async{
+    if( _multicastSocket == null )
+      return;
     for(NetworkInterface interface in await interfaces) {
-      //TODO we should only connect to the interface with the right multicast group
-      // IP version. Right now, the user can only specify just one multicast IP and
-      // that can either be v4 or v6. If IPVersion.anny is chosen then we may find
-      // ourselves using one IP version for the other
       try {
         _multicastSocket.leaveMulticast(InternetAddress(_multicastGroupIP), interface);
       }
       catch(ignored){}
     }
-    _multicastSocket?.close();
+    _multicastSocket.close();
   }
 
   void _disconnectFromServer() async{

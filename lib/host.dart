@@ -43,13 +43,11 @@ abstract class Host{
    * of the default 5018. This is the port that the multicast group will be listening on.
    * You only need to set this if you plan to enable device discovery and advertisements.
    *
-   * [multicastGroupIP] is the Multicast IP address for the multicast group. The
-   * default is 225.225.225.225 but it can be changed to a valid multicast address.
-   * assert is used to validate the multicast address which should be in the
-   * range: 224.0.0.0 to 239.255.255.255 (actually 224.0.0.1 to 239.255.255.254)
-   *
    * [ipVersion] is the version of IP to use for all addresses. Options are:
    * IPVersion.any, IPVersion.v4, and IPVersion.v6
+   *
+   * The multicastGroupIP will use to 225.225.225.225 for IPVersion.v4 or
+   * IPVersion.any and will use FF02::FB for IPVersion.v6
    *
    * If you enable discovery, you should provide a [DeviceDiscoveryListener]
    * option to receive connection and disconnection events.
@@ -57,32 +55,16 @@ abstract class Host{
    * You should normally provide a [ConnectionListener] to receive events on
    * connection and disconnection.
    */
-  Host({String name, int multicastPort, String multicastGroupIP, IPVersion ipVersion,
+  Host({String name, int multicastPort, IPVersion ipVersion,
     DeviceDiscoveryListener deviceDiscoveryListener, ConnectionListener connectionListener}){
     _name = name?.replaceAll("|", "_") ?? "<Unknown Host>";
     _multicastPort = multicastPort ?? DEFAULT_MULTICAST_PORT;
     _ipVersion = ipVersion ?? IPVersion.any;
-    _multicastGroupIP = multicastGroupIP ??
-        (_ipVersion == IPVersion.any || _ipVersion == IPVersion.v4 ?
+    _multicastGroupIP = (_ipVersion == IPVersion.any || _ipVersion == IPVersion.v4 ?
           DEFAULT_MULTICAST_GROUP_IPV4 : DEFAULT_MULTICAST_GROUP_IPV6);
     _discoveryListener = deviceDiscoveryListener;
     _connectionListener = connectionListener;
     _discoveredDevices = Set();
-
-    assert(_multicastGroupIsValid(_multicastGroupIP), "multicastGroupIP is not valid!");
-  }
-
-  bool _multicastGroupIsValid(String ip){
-    List<String> parts = ip.split(".");
-    if( parts.length != 4 )
-      return false;
-    //224.0.0.0 to 239.255.255.255
-    if( int.parse(parts[0]) < 224 || int.parse(parts[0]) > 239 )
-      return false;
-    if( parts.any((part) => int.parse(part) > 255 || int.parse(part) < 0) )
-      return false;
-    return !(int.parse(parts[0]) == 224
-        && parts.sublist(1).every((part) => int.parse(part) == 0));
   }
 
   Future<bool> _multicastConnect(int port) async{
@@ -107,6 +89,14 @@ abstract class Host{
 
   /// Hosts can send messages to other devices using the internal socket
   /// contained in the Device.
+  ///
+  /// Messages can mostly only be sent to Devices received after
+  /// an event is received from [ConnectionListener.onConnected] which is triggered
+  /// when a Client uses [Client.connectTo] to initiate a connection. You cannot
+  /// send messages to Devices received in the Discovery phases from
+  /// [DeviceDiscoveryListener.onDiscovery] or [DeviceDiscoveryListener.onAdvertisement].
+  /// On the Server can send unreliable broadcast messages to the multicast
+  /// group by using [Server.broadcast].
   ///
   /// When [ignoreIfNotConnected] is set to true, If the device is not connected,
   /// it will be silently ignore. If however the value is false which is the
@@ -173,9 +163,9 @@ abstract class Host{
   /// IP addresses are not cached because they could potentially be stale.
   Future<Iterable<String>> _getAddresses(InternetAddressType type) async{
     final interfaces = await NetworkInterface.list(includeLoopback: false,
-        type: type);
+        includeLinkLocal: true, type: type);
 
-    //print("Found ${interfaces.length} interface(s)");
+    print("Found ${interfaces.length} interface(s)");
 
     return interfaces.where((interface) => interface != null)
         .expand((interface) => interface.addresses)
@@ -189,7 +179,8 @@ abstract class Host{
     else if( _ipVersion == IPVersion.v6 )
       type = InternetAddressType.IPv6;
 
-    return NetworkInterface.list(includeLoopback: false, type: type);
+    return NetworkInterface.list(includeLoopback: false, includeLinkLocal: true,
+        type: type);
   }
 
   /// Set the name of this Host. Useful for identification purposes. This will be

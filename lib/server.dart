@@ -9,11 +9,16 @@ class Server extends Host{
   // If the user wants to choose the IP address which the Server will listen on,
   // this is the callback that will be used
   ListenOn _listenOn;
+  List<RawDatagramSocket> _multicastSockets;
+  CustomAdvertisement _customAdvertisement;
 
   /**
    * [listenOn] Allows you to provide the IP address the server should listen on
    * for Client connections. If none is provided, the Server will listen on all
    * IP address found for the supplied [ipVersion]
+   *
+   * The optional [customAdvertisement] allows you to specify a custom advertisement message
+   * to be sent to the multicast group and received using [CustomAdvertisement.onAdvertisement]
    *
    * [enableDiscovery] is used to inform the Server to broadcast advertisements
    * to a multicast group which will be joined by Clients to allow dynamic port
@@ -28,15 +33,17 @@ class Server extends Host{
    *
    * See [Host] for explanation on other common options.
    */
-  Server({String name, int multicastPort, String multicastGroupIP, IPVersion ipVersion,
+  Server({String name, int multicastPort, IPVersion ipVersion, CustomAdvertisement customAdvertisement,
     DeviceDiscoveryListener deviceDiscoveryListener, ConnectionListener connectionListener,
     int serverSocketPort, bool enableDiscovery = true, ListenOn listenOn})
-      : super(name: name ?? "Server", multicastPort: multicastPort, multicastGroupIP : multicastGroupIP,
+      : super(name: name ?? "Server", multicastPort: multicastPort,
         ipVersion: ipVersion, deviceDiscoveryListener : deviceDiscoveryListener,
         connectionListener : connectionListener){
     _socketPort = serverSocketPort ?? 0;
     _enableDiscovery = enableDiscovery;
     _listenOn = listenOn;
+    _multicastSockets = [];
+    _customAdvertisement = customAdvertisement;
     // check that the port is within a valid range
     if( _socketPort != 0 ){
       assert(_socketPort > 1024);
@@ -144,6 +151,46 @@ class Server extends Host{
     if( !await _multicastConnect(0) )
       return;
 
+    // We shouldn't be able to send to InternetAddress.anyIPv6
+    if( _ipVersion != IPVersion.v6 )
+      _multicastSockets.add(_multicastSocket);
+
+    for(NetworkInterface interface in await interfaces) {
+      // Use the first address reported by the interface
+      final InternetAddress address = interface.addresses[0];
+
+      try {
+        // Lets create a multicast socket for each adapter to we can be able to
+        // send multicast
+        RawDatagramSocket s = await RawDatagramSocket.bind(
+            address,
+            _multicastPort, // _multicastPort or 0
+            reuseAddress: true,
+            reusePort: false)
+          ..broadcastEnabled = true
+          ..readEventsEnabled = true;
+
+        _multicastSockets.add(s);
+
+        if( address.type == InternetAddressType.IPv4 ){
+          _multicastSocket.setRawOption(RawSocketOption(
+              RawSocketOption.levelIPv4,
+              RawSocketOption.IPv4MulticastInterface,
+              address.rawAddress
+          ));
+        }
+        else{
+          _multicastSocket.setRawOption(RawSocketOption.fromInt(
+              RawSocketOption.levelIPv6,
+              RawSocketOption.IPv6MulticastInterface,
+              interface.index
+          ));
+        }
+      }
+      catch(ignored){}
+    }
+
+    // we listen on all addresses
     _multicastSocket.listen((event) {
       if (event == RawSocketEvent.read) {
         Datagram datagram = _multicastSocket.receive();
@@ -172,13 +219,19 @@ class Server extends Host{
   void _startAdvertisementTimer(){
     _timer = Timer.periodic(Duration(seconds: 1), (_) {
       if ( _timer.isActive ) {
-        // send the name of this host and the listening port for reliable
-        //connection along with the PING message
-        _multicastSocket.send(
-          Packet.from("PING|$name|$_socketPort").bytes,
-          InternetAddress(_multicastGroupIP),
-          _multicastPort,
-        );
+        // We send to all interface multicast sockets
+        for( RawDatagramSocket s in _multicastSockets ){
+          // If a custom advertisement is provided, send that else send the internal
+          // communication message
+          s.send(
+            _customAdvertisement != null ? _customAdvertisement(_socketPort)
+              // send the name of this host and the listening port for reliable
+              //connection along with the PING message
+                : Packet.from("PING|$name|$_socketPort").bytes,
+            InternetAddress(_multicastGroupIP),
+            _multicastPort,
+          );
+        }
       }
     });
   }
@@ -192,11 +245,15 @@ class Server extends Host{
     else if( _ipAddress == null )
       throw "Unable to detect host IP address";
     else if( _multicastSocket != null && !reliable ){ // multicast broadcast
-      _multicastSocket.send(
+      for( RawDatagramSocket s in _multicastSockets ){
+        s.send(
           packet.bytes,
-          InternetAddress(_ipAddress.split(".").sublist(0, 3).join(".") + ".255"),
+          _ipAddress.contains(".") ?
+              InternetAddress(_ipAddress.split(".").sublist(0, 3).join(".") + ".255") :
+              _multicastGroupIP,
           _multicastPort
-      );
+        );
+      }
     }
     else if( _serverSocket != null && reliable ){ // reliable broadcast
       // send reliable broadcast using all connected client sockets
@@ -237,6 +294,10 @@ class Server extends Host{
   /// Stop this Server from Advertising for Client discovery
   void stopDiscovery(){
     _stopAdvertisementTimer();
+
+    for( RawDatagramSocket s in _multicastSockets )
+      s.close();
+
     _multicastSocket?.close();
     _multicastSocket = null;
   }
@@ -258,3 +319,13 @@ class Server extends Host{
 /// If the ListenOn option is not specified during the creation of the
 /// Server, the Server will listen on all of the discovered IP addresses.
 typedef ListenOn = Future<String> Function(Future<Iterable<Map<NetworkInterface, Iterable<InternetAddress>>>> interfaceAddresses);
+
+/// This is used to create a custom advertisement message.
+///
+/// [socketPort] is the port which the Server is listening. If you pass a serverSocketPort
+/// to [Server], [socketPort] will be the same value else it will be the one assigned
+/// by the operating system.
+///
+/// This should return a [Packet] which will be sent out as the advertisement
+/// to all the [Client]s.
+typedef CustomAdvertisement = Packet Function(int socketPort);

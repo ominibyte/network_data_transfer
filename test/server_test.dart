@@ -39,6 +39,10 @@ class MyDiscoveryListener implements DeviceDiscoveryListener{
   onClose(bool isError, Object error, StackTrace stackTrace){
     print("Discovery multicast socket closed");
   }
+
+  @override
+  void onAdvertisement(Device device, Packet packet) {
+  }
 }
 
 class MyConnectionListener implements ConnectionListener{

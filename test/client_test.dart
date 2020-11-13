@@ -32,10 +32,14 @@ class MyDiscoveryListener implements DeviceDiscoveryListener{
     // Connect to Server
     client.connectTo(newDevice);
   }
-
   @override
   onClose(bool isError, Object error, StackTrace stackTrace){
     print("Discovery multicast socket closed");
+  }
+
+  @override
+  void onAdvertisement(Device device, Packet packet) {
+    print("Received ${packet.asString()} in onAdvertisement from Server.");
   }
 }
 
