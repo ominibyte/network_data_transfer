@@ -64,44 +64,59 @@ class Packet{
     return p;
   }
 
+  /// Add a single by to this packet
   add(int byte){
     assert(_isStream != null && !_isStream);
     _bytes.add(byte);
   }
 
+  /// Add bytes to this packet
   addAll(Iterable<int> bytes){
     assert(_isStream != null && !_isStream);
     _bytes.addAll(bytes);
   }
 
+  /// Get the raw bytes in this packet
   Uint8List get bytes{
     assert(_isStream != null && !_isStream);
     return Uint8List.fromList(_bytes);
   }
 
+  /// Check is this packet is enclosing a stream
   bool get isStream => _isStream;
 
+  /// Get the enclosing stream
   Stream get stream{
     assert(_isStream != null && _isStream);
     return _stream;
   }
 
+  /// Get the size of the bytes in this packet.
+  /// This only works if the packet is not a stream.
   int get size{
     assert(_isStream != null && !_isStream);
     return _bytes.length;
   }
 
   /// Allow transformation back to popular data types
-  /// For using these methods, We're assuming it is safe to transform to String
-
+  /// For using the as() and asXX() methods, We're assuming it is safe to
+  /// transform to utf8 Strings.
+  ///
+  /// This method provides a common generic way of transforming the bytes
+  /// to one the supported serialization formats. As an example:
+  /// as<String>() is same as asString()
+  /// as<Map> is same as asMap()
+  /// as<Map<String, dynamic>>() is same as asMap<String, dynamic>()
+  /// as<List>() is same as asList()
+  /// as<int>() is same as asInt()
   E as<E>(){
     assert(_isStream != null && !_isStream);
 
     if( E == String )
       return asString() as E;
-    else if( E.toString() == Map<String, dynamic>().runtimeType.toString() )
+    else if( E.toString().startsWith("Map<") )
       return asMap() as E;
-    else if( E.toString() == List<dynamic>().runtimeType.toString() )
+    else if( E.toString().startsWith("List<") )
       return asList() as E;
     else if( E == int )
       return asInt() as E;
@@ -112,39 +127,57 @@ class Packet{
     else if( E == bool )
       return asBool() as E;
 
-    throw new Exception("Unsupported return type. Deserialize to one of the supported formats");
+    throw "Unsupported return type. Deserialize to one of the supported formats";
   }
 
+  /// For using this method, We're assuming it is safe to transform to utf8 Strings.
+  /// Return the bytes as utf8 encoded string. Same as as<String>().
   String asString(){
     assert(_isStream != null && !_isStream);
     return utf8.decode(_bytes.toList());
   }
 
-  Map<String, dynamic> asMap(){
+  /// For using this method, We're assuming it is safe to transform to utf8 Strings.
+  /// Return the bytes as a Map decoded using jsonDecode(). Same as as<Map>().
+  /// If the Key and Value are Strings, you can do asMap<String, String>() or get
+  /// the dynamic form and do the cast yourself.
+  Map<E, F> asMap<E, F>(){
     assert(_isStream != null && !_isStream);
-    return jsonDecode(asString());
+    return jsonDecode(asString()) as Map<E, F>;
   }
 
-  List<dynamic> asList(){
+  /// For using this method, We're assuming it is safe to transform to utf8 Strings.
+  /// Return the bytes as a List decoded using jsonDecode(). Same as as<List>().
+  /// If the List contains all String, you can do asList<String>() or get the dynamic form
+  /// and do the cast yourself.
+  List<E> asList<E>(){
     assert(_isStream != null && !_isStream);
-    return jsonDecode(asString());
+    return jsonDecode(asString()) as List<E>;
   }
 
+  /// For using this method, We're assuming it is safe to transform to utf8 Strings.
+  /// Returns the bytes as a number using num.parse()
   num asNumber(){
     assert(_isStream != null && !_isStream);
     return num.parse(asString());
   }
 
+  /// For using this method, We're assuming it is safe to transform to utf8 Strings.
+  /// Returns the bytes as am integer using int.parse()
   int asInt(){
     assert(_isStream != null && !_isStream);
     return int.parse(asString());
   }
 
+  /// For using this method, We're assuming it is safe to transform to utf8 Strings.
+  /// Returns the bytes as a double using double.parse()
   double asDouble(){
     assert(_isStream != null && !_isStream);
     return double.parse(asString());
   }
 
+  /// For using this method, We're assuming it is safe to transform to utf8 Strings.
+  /// Returns the bytes as a boolean using string comparison
   bool asBool(){
     assert(_isStream != null && !_isStream);
     return asString() == "true";

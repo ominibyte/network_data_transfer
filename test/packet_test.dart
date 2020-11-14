@@ -45,10 +45,13 @@ void main(){
         isMap,
         hasLength(3)
       ]));
-      expect(packet.asMap()["name"] as String, equals("Richboy"));
+      expect(packet.asMap<String, dynamic>()["name"] as String, equals("Richboy"));
       expect(packet.asMap()["age"] as int, equals(24));
       expect(packet.asMap()["temperature"] as double, equals(34.5));
       expect(packet.asMap()["notexist"], isNull);
+
+      Map<String, dynamic> map = packet.as<Map<String, dynamic>>();
+      print(map);
     });
   });
 

@@ -105,7 +105,15 @@
     </section>
     <section class="desc markdown">
       <p>Allow transformation back to popular data types
-For using these methods, We're assuming it is safe to transform to String</p>
+For using the as() and asXX() methods, We're assuming it is safe to
+transform to utf8 Strings.</p>
+<p>This method provides a common generic way of transforming the bytes
+to one the supported serialization formats. As an example:
+as<string>() is same as asString()
+as<map> is same as asMap()
+as&lt;Map&lt;String, dynamic&gt;&gt;() is same as asMap&lt;String, dynamic&gt;()
+as<list>() is same as asList()
+as<int>() is same as asInt()</int></list></map></string></p>
     </section>
     
     <section class="summary source-code" id="source">
@@ -115,9 +123,9 @@ For using these methods, We're assuming it is safe to transform to String</p>
 
   if( E == String )
     return asString() as E;
-  else if( E.toString() == Map&lt;String, dynamic&gt;().runtimeType.toString() )
+  else if( E.toString().startsWith(&quot;Map&lt;&quot;) )
     return asMap() as E;
-  else if( E.toString() == List&lt;dynamic&gt;().runtimeType.toString() )
+  else if( E.toString().startsWith(&quot;List&lt;&quot;) )
     return asList() as E;
   else if( E == int )
     return asInt() as E;
@@ -128,7 +136,7 @@ For using these methods, We're assuming it is safe to transform to String</p>
   else if( E == bool )
     return asBool() as E;
 
-  throw new Exception(&quot;Unsupported return type. Deserialize to one of the supported formats&quot;);
+  throw &quot;Unsupported return type. Deserialize to one of the supported formats&quot;;
 }</code></pre>
     </section>
 
@@ -142,7 +150,7 @@ For using these methods, We're assuming it is safe to transform to String</p>
 <footer>
   <span class="no-break">
     network_data_transfer
-      0.0.3
+      0.0.4
   </span>
 
 </footer>

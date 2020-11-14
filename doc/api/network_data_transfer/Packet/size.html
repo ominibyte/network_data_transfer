@@ -106,7 +106,11 @@
           
 </section>
         
-                        <section class="summary source-code" id="source">
+                <section class="desc markdown">
+          <p>Get the size of the bytes in this packet.
+This only works if the packet is not a stream.</p>
+        </section>
+                <section class="summary source-code" id="source">
           <h2><span>Implementation</span></h2>
           <pre class="language-dart"><code class="language-dart">int get size{
   assert(_isStream != null &amp;&amp; !_isStream);
@@ -125,7 +129,7 @@
 <footer>
   <span class="no-break">
     network_data_transfer
-      0.0.3
+      0.0.4
   </span>
 
 </footer>

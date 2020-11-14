@@ -106,7 +106,10 @@
 </section>
         
                 <section class="desc markdown">
-          <p>If this device is ready to</p>
+          <p>If the Host (Client/Server) has completed it's initialization phase
+and is ready to start advertising/discovering services.</p>
+<p>To check if the <a href="../../network_data_transfer/Server-class.html">Server</a> can start receiving connections, You should first
+await on this and then check the <a href="../../network_data_transfer/Server/running.html">Server.running</a> property.</p>
         </section>
                 <section class="summary source-code" id="source">
           <h2><span>Implementation</span></h2>
@@ -124,7 +127,7 @@
 <footer>
   <span class="no-break">
     network_data_transfer
-      0.0.3
+      0.0.4
   </span>
 
 </footer>

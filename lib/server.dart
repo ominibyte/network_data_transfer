@@ -262,7 +262,11 @@ class Server extends Host{
     }
   }
 
+  /// Get the port that the server is listening on. If the server is not yet ready,
+  /// this will return null. First await on the [Server.ready] before getting this
   int get port => _socketPort;
+
+  /// Check if the server up and ready to receive reliable socket connections.
   bool get running => _running;
 
   /// Shutdown the Server by Disconnecting from all sockets

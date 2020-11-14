@@ -135,13 +135,18 @@ abstract class Host{
   }
 
 
-  /// If this device is ready to
+  /// If the Host (Client/Server) has completed it's initialization phase
+  /// and is ready to start advertising/discovering services.
+  ///
+  /// To check if the [Server] can start receiving connections, You should first
+  /// await on this and then check the [Server.running] property.
   Future<bool> get ready => _readyCompleter.future;
 
-  /// Get the detected IP address
+  /// Get the first detected IP address which the host could listen on (if Server)
+  /// or connect using (if Client)
   String get ipAddress => _ipAddress;
 
-  /// Get the multicast Group IP Address
+  /// Get the multicast Group IP Address being used
   String get multicastIPAddress => _multicastGroupIP;
 
   /// Get the multicast port
@@ -154,6 +159,7 @@ abstract class Host{
   /// Get all IP addresses for IPv6
   Future<Iterable<String>> get ipv6Addresses async => _getAddresses(InternetAddressType.IPv6);
 
+  /// Get a Map of all the interfaces and IP addresses found in the interfaces
   Future<Iterable<Map<NetworkInterface, Iterable<InternetAddress>>>> get interfaceAddresses async{
     List<Map<NetworkInterface, Iterable<InternetAddress>>> addresses = [];
 
@@ -179,6 +185,7 @@ abstract class Host{
         .map((address) => address.address);
   }
 
+  /// Get all the interfaces found in this Host
   Future<List<NetworkInterface>> get interfaces{
     InternetAddressType type = InternetAddressType.any;
     if( _ipVersion == IPVersion.v4 )
@@ -193,9 +200,11 @@ abstract class Host{
   /// Set the name of this Host. Useful for identification purposes. This will be
   /// sent to all other communicating devices as the name of the host
   set name (String name) => _name = name;
+
   /// Get the name of this Host. Must have been set using the set property or constructor
   String get name => _name;
 
+  /// Disconnect from the host
   Future<void> disconnect();
 }
 

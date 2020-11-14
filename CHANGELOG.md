@@ -1,3 +1,7 @@
+## [0.0.4] - 2020-11-14
+
+* Modified the Packet class to allow more complex direct conversion to Maps and Lists.
+
 ## [0.0.3] - 2020-11-13
 
 * Changed multicast discovery and advertisement implementation.
@@ -9,12 +13,12 @@
 
 ## [0.0.1] - 2020-11-11
 
-* The release of the first non-dev version
+* The release of the first non-dev version.
 
 ## [0.0.1-dev.2] - 2020-11-10
 
-* Communication between Server and Client up and running
+* Communication between Server and Client up and running.
 
 ## [0.0.1-dev.1] - 2020-11-09
 
-* Initial alpha release
+* Initial alpha release.

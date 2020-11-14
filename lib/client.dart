@@ -146,8 +146,11 @@ class Client extends Host{
     }, cancelOnError: true);
   }
 
+  /// Check if the Client is connected to the Server and can start sending and
+  /// receiving messages.
   bool get connected => _connected;
 
+  /// Use this for housekeeping to disconnect this Client from the Server
   @override
   Future<void> disconnect() async{
     await _disconnectFromMulticastGroup();

@@ -27,7 +27,7 @@
     <li><a href="../../index.html">network_data_transfer</a></li>
     <li><a href="../../network_data_transfer/network_data_transfer-library.html">network_data_transfer</a></li>
     <li><a href="../../network_data_transfer/Packet-class.html">Packet</a></li>
-    <li class="self-crumb">asList method</li>
+    <li class="self-crumb">asList&lt;<wbr><span class="type-parameter">E</span>&gt; method</li>
   </ol>
   <div class="self-name">asList</div>
   <form class="search navbar-right" role="search">
@@ -48,7 +48,7 @@
       <li><a href="../../index.html">network_data_transfer</a></li>
       <li><a href="../../network_data_transfer/network_data_transfer-library.html">network_data_transfer</a></li>
       <li><a href="../../network_data_transfer/Packet-class.html">Packet</a></li>
-      <li class="self-crumb">asList method</li>
+      <li class="self-crumb">asList&lt;<wbr><span class="type-parameter">E</span>&gt; method</li>
     </ol>
     
     <h5>Packet class</h5>
@@ -95,20 +95,26 @@
   </div><!--/.sidebar-offcanvas-->
 
   <div id="dartdoc-main-content" class="col-xs-12 col-sm-9 col-md-8 main-content">
-      <div><h1><span class="kind-method">asList</span> method </h1></div>
+      <div><h1><span class="kind-method">asList&lt;<wbr><span class="type-parameter">E</span>&gt;</span> method </h1></div>
 
     <section class="multi-line-signature">
-      <span class="returntype"><a href="https://api.dart.dev/stable/2.10.3/dart-core/List-class.html">List</a></span>
+      <span class="returntype"><a href="https://api.dart.dev/stable/2.10.3/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter">E</span>&gt;</span></span>
             <span class="name ">asList</span>
-(<wbr>)
+&lt;<wbr><span class="type-parameter">E</span>&gt;(<wbr>)
       
+    </section>
+    <section class="desc markdown">
+      <p>For using this method, We're assuming it is safe to transform to utf8 Strings.
+Return the bytes as a List decoded using jsonDecode(). Same as as<list>().
+If the List contains all String, you can do asList<string>() or get the dynamic form
+and do the cast yourself.</string></list></p>
     </section>
     
     <section class="summary source-code" id="source">
       <h2><span>Implementation</span></h2>
-      <pre class="language-dart"><code class="language-dart">List&lt;dynamic&gt; asList(){
+      <pre class="language-dart"><code class="language-dart">List&lt;E&gt; asList&lt;E&gt;(){
   assert(_isStream != null &amp;&amp; !_isStream);
-  return jsonDecode(asString());
+  return jsonDecode(asString()) as List&lt;E&gt;;
 }</code></pre>
     </section>
 
@@ -122,7 +128,7 @@
 <footer>
   <span class="no-break">
     network_data_transfer
-      0.0.3
+      0.0.4
   </span>
 
 </footer>
