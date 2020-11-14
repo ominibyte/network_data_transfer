@@ -50,7 +50,9 @@ class MyConnectionListener implements ConnectionListener{
   void onConnected(Device device) {
     print("Device Connected to Server: $device");
     // Send a handshake to begin conversation
-    server.send(Packet.from(WordPair.random().asPascalCase), device);
+    //server.send(Packet.from(WordPair.random().asPascalCase), device);
+    // Send file to Client
+    server.send(Packet.fromStream(new File("sample.txt").openRead()), device);
   }
 
   @override

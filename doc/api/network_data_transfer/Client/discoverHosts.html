@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the discoverHosts method from the Client class, for the Dart programming language.">
+  <title>discoverHosts method - Client class - network_data_transfer library - Dart API</title>
+
+  
+  <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:500,400i,400,300|Source+Sans+Pro:400,300,700" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="../../static-assets/github.css">
+  <link rel="stylesheet" href="../../static-assets/styles.css">
+  <link rel="icon" href="../../static-assets/favicon.png">
+
+</head>
+
+<body data-base-href="../../"
+      data-using-base-href="false">
+
+<div id="overlay-under-drawer"></div>
+
+<header id="title">
+  <button id="sidenav-left-toggle" type="button">&nbsp;</button>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../../index.html">network_data_transfer</a></li>
+    <li><a href="../../network_data_transfer/network_data_transfer-library.html">network_data_transfer</a></li>
+    <li><a href="../../network_data_transfer/Client-class.html">Client</a></li>
+    <li class="self-crumb">discoverHosts method</li>
+  </ol>
+  <div class="self-name">discoverHosts</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+
+<main>
+
+  <div id="dartdoc-sidebar-left" class="col-xs-6 col-sm-3 col-md-2 sidebar sidebar-offcanvas-left">
+    <header id="header-search-sidebar" class="hidden-l">
+      <form class="search-sidebar" role="search">
+        <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+      </form>
+    </header>
+    
+    <ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+      <li><a href="../../index.html">network_data_transfer</a></li>
+      <li><a href="../../network_data_transfer/network_data_transfer-library.html">network_data_transfer</a></li>
+      <li><a href="../../network_data_transfer/Client-class.html">Client</a></li>
+      <li class="self-crumb">discoverHosts method</li>
+    </ol>
+    
+    <h5>Client class</h5>
+    <ol>
+    
+        <li class="section-title"><a href="../../network_data_transfer/Client-class.html#constructors">Constructors</a></li>
+        <li><a href="../../network_data_transfer/Client/Client.html">Client</a></li>
+    
+        <li class="section-title">
+            <a href="../../network_data_transfer/Client-class.html#instance-properties">Properties</a>
+        </li>
+        <li><a href="../../network_data_transfer/Client/connected.html">connected</a></li>
+        <li class="inherited"><a href="https://api.dart.dev/stable/2.10.3/dart-core/Object/hashCode.html">hashCode</a></li>
+        <li class="inherited"><a href="../../network_data_transfer/Host/interfaceAddresses.html">interfaceAddresses</a></li>
+        <li class="inherited"><a href="../../network_data_transfer/Host/interfaces.html">interfaces</a></li>
+        <li class="inherited"><a href="../../network_data_transfer/Host/ipAddress.html">ipAddress</a></li>
+        <li class="inherited"><a href="../../network_data_transfer/Host/ipAddresses.html">ipAddresses</a></li>
+        <li class="inherited"><a href="../../network_data_transfer/Host/ipv4Addresses.html">ipv4Addresses</a></li>
+        <li class="inherited"><a href="../../network_data_transfer/Host/ipv6Addresses.html">ipv6Addresses</a></li>
+        <li class="inherited"><a href="../../network_data_transfer/Host/multicastIPAddress.html">multicastIPAddress</a></li>
+        <li class="inherited"><a href="../../network_data_transfer/Host/multicastPort.html">multicastPort</a></li>
+        <li class="inherited"><a href="../../network_data_transfer/Host/name.html">name</a></li>
+        <li class="inherited"><a href="../../network_data_transfer/Host/ready.html">ready</a></li>
+        <li class="inherited"><a href="https://api.dart.dev/stable/2.10.3/dart-core/Object/runtimeType.html">runtimeType</a></li>
+    
+        <li class="section-title"><a href="../../network_data_transfer/Client-class.html#instance-methods">Methods</a></li>
+        <li><a href="../../network_data_transfer/Client/connectTo.html">connectTo</a></li>
+        <li><a href="../../network_data_transfer/Client/disconnect.html">disconnect</a></li>
+        <li><a href="../../network_data_transfer/Client/discoverHosts.html">discoverHosts</a></li>
+        <li class="inherited"><a href="https://api.dart.dev/stable/2.10.3/dart-core/Object/noSuchMethod.html">noSuchMethod</a></li>
+        <li class="inherited"><a href="../../network_data_transfer/Host/send.html">send</a></li>
+        <li><a href="../../network_data_transfer/Client/stopDiscovery.html">stopDiscovery</a></li>
+        <li class="inherited"><a href="https://api.dart.dev/stable/2.10.3/dart-core/Object/toString.html">toString</a></li>
+    
+        <li class="section-title inherited"><a href="../../network_data_transfer/Client-class.html#operators">Operators</a></li>
+        <li class="inherited"><a href="https://api.dart.dev/stable/2.10.3/dart-core/Object/operator_equals.html">operator ==</a></li>
+    
+    
+    
+    
+    
+    </ol>
+  </div><!--/.sidebar-offcanvas-->
+
+  <div id="dartdoc-main-content" class="col-xs-12 col-sm-9 col-md-8 main-content">
+      <div><h1><span class="kind-method">discoverHosts</span> method </h1></div>
+
+    <section class="multi-line-signature">
+      <span class="returntype"><a href="https://api.dart.dev/stable/2.10.3/dart-async/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.dart.dev/stable/2.10.3/dart-core/bool-class.html">bool</a></span>&gt;</span></span>
+            <span class="name ">discoverHosts</span>
+(<wbr><ol class="parameter-list"><li><span class="parameter" id="discoverHosts-param-precondition">[<span class="type-annotation"><a href="https://api.dart.dev/stable/2.10.3/dart-async/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.dart.dev/stable/2.10.3/dart-core/bool-class.html">bool</a></span>&gt;</span></span> <span class="parameter-name">precondition</span>]</span></li>
+</ol>)
+      
+    </section>
+    <section class="desc markdown">
+      <p>Client searches for AP hosts (Servers).
+The Client joins a multicast group to listens for advertisements.
+This method returns boolean future that indicates if the client was able to
+join the multicast group.</p>
+<p><code>precondition</code> is an optional Check you can specify the Client to make
+before continuing. This is useful if there is some long running task that
+must be satisfied before the client begins host discovery. <code>precondition</code>,
+if specified must return a boolean value. On some hosts, you may need to
+prepare the system to intercept any messages from the multicast group which
+is an example of how the optional parameter can be used to handle such requirement</p>
+    </section>
+    
+    <section class="summary source-code" id="source">
+      <h2><span>Implementation</span></h2>
+      <pre class="language-dart"><code class="language-dart">Future&lt;bool&gt; discoverHosts([Future&lt;bool&gt; precondition]) async{
+  if( precondition != null &amp;&amp; !await precondition )
+    return false;
+
+  &#47;&#47; Disconnect just in case we were previously connected to one.
+  await _disconnectFromMulticastGroup();
+
+  if( !await _multicastConnect(_multicastPort) )
+    return false;
+
+  &#47;&#47; Go through all the interfaces and try to join the multicast group for
+  &#47;&#47; that interface
+  for(NetworkInterface interface in await interfaces) {
+    try {
+      _multicastSocket.joinMulticast(InternetAddress(_multicastGroupIP), interface);
+    }
+    catch(ignored){}
+  }
+
+  _multicastSocket.listen((event) {
+    if (event == RawSocketEvent.read) {
+      Datagram datagram = _multicastSocket.receive();
+      if (datagram != null &amp;&amp; Packet.from(datagram.data).as&lt;String&gt;().startsWith(&quot;PING&quot;)) {
+        &#47;&#47; send the name of the host along side the response
+        _multicastSocket.send(
+          Packet.from(&quot;PONG|$name&quot;).bytes,
+          datagram.address,
+          datagram.port,
+        );
+
+        List&lt;String&gt; parts = Packet.from(datagram.data).as&lt;String&gt;().split(&quot;|&quot;);
+        Device device = new Device.from(
+          ip: datagram.address.address,
+          port: int.tryParse(parts[2]),
+          name: parts[1]
+        );
+
+        if( !_discoveredDevices.contains(device) ){
+          _discoveredDevices.add(device);
+          _discoveryListener?.onDiscovery(device, _discoveredDevices);
+        }
+      }
+      else if( datagram != null ){
+        _discoveryListener?.onAdvertisement(
+          Device(datagram.address.address, datagram.port),
+          Packet.fromBytes(datagram.data)
+        );
+      }
+    }
+  }, onDone: () async{
+    await _disconnectFromMulticastGroup();
+    _discoveryListener?.onClose(false, null, null);
+  }, onError: (Object error, StackTrace stackTrace) async{
+    await _disconnectFromMulticastGroup();
+    _discoveryListener?.onClose(true, error, stackTrace);
+  }, cancelOnError: true);
+
+  return true;
+}</code></pre>
+    </section>
+
+  </div> <!-- /.main-content -->
+
+  <div id="dartdoc-sidebar-right" class="col-xs-6 col-sm-6 col-md-2 sidebar sidebar-offcanvas-right">
+  </div><!--/.sidebar-offcanvas-->
+
+</main>
+
+<footer>
+  <span class="no-break">
+    network_data_transfer
+      0.0.3
+  </span>
+
+</footer>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="../../static-assets/typeahead.bundle.min.js"></script>
+<script src="../../static-assets/highlight.pack.js"></script>
+<script src="../../static-assets/URI.js"></script>
+<script src="../../static-assets/script.js"></script>
+
+
+</body>
+
+</html>

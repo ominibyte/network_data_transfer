@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:network_data_transfer/host.dart';
 import 'package:english_words/english_words.dart';
 
 Iterable<Device> devices;
 Client client;
+bool receivedFile = false;
 
 void main() async{
   client = Client(
@@ -55,8 +58,14 @@ class MyConnectionListener implements ConnectionListener{
   }
 
   @override
-  void onMessage(Packet packet, Device device) {
-    print("Message Received from Server $device: ${packet.asString()}");
+  void onMessage(Packet packet, Device device) async {
+    if( receivedFile )
+      print("Message Received from Server $device: ${packet.asString()}");
+    else{
+      receivedFile = true;
+      print("File [sample_copy.txt] Received from Server $device: ${packet.asString()}");
+      await new File("sample_copy.txt").openWrite()..add(packet.bytes)..flush();
+    }
     // Send message back to this client
     Future.delayed(Duration(seconds: 1)).then((_) =>
         client.send(Packet.from(WordPair.random().asPascalCase), device,

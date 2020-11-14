@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="generator" content="made with love by dartdoc 0.32.4">
+  <meta name="description" content="network_data_transfer API docs, for the Dart programming language.">
+  <title>network_data_transfer - Dart API docs</title>
+
+  
+  <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:500,400i,400,300|Source+Sans+Pro:400,300,700" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="static-assets/github.css">
+  <link rel="stylesheet" href="static-assets/styles.css">
+  <link rel="icon" href="static-assets/favicon.png">
+
+</head>
+
+<body data-base-href=""
+      data-using-base-href="false">
+
+<div id="overlay-under-drawer"></div>
+
+<header id="title">
+  <button id="sidenav-left-toggle" type="button">&nbsp;</button>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li class="self-crumb">network_data_transfer package</li>
+  </ol>
+  <div class="self-name">network_data_transfer</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+
+<main>
+
+  <div id="dartdoc-sidebar-left" class="col-xs-6 col-sm-3 col-md-2 sidebar sidebar-offcanvas-left">
+    <header id="header-search-sidebar" class="hidden-l">
+      <form class="search-sidebar" role="search">
+        <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+      </form>
+    </header>
+    
+    <ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+      <li class="self-crumb">network_data_transfer package</li>
+    </ol>
+    
+    <h5 class="hidden-xs"><span class="package-name">network_data_transfer</span> <span class="package-kind">package</span></h5>
+    <ol>
+          <li class="section-title">Libraries</li>
+          <li><a href="network_data_transfer/network_data_transfer-library.html">network_data_transfer</a></li>
+    </ol>
+  </div>
+
+  <div id="dartdoc-main-content" class="col-xs-12 col-sm-9 col-md-8 main-content">
+      <section class="desc markdown">
+        <h1 id="network_data_transfer">network_data_transfer</h1>
+<p>A network data transfer package using dart.</p>
+<p>This package assumes that the devices are already on the same network.</p>
+<p><a href="doc/api/index.html">See the documentation here</a>, <a href="network_data_transfer/network_data_transfer-library.html">or here</a> for more information on available classes and methods.</p>
+<h2 id="usage">Usage</h2>
+<p>See test directory on how to start a Client and Server as well as sending files and messages.</p>
+<p>Sample <code>client_test.dart</code> for working with Client:</p>
+<pre class="language-dart"><code class="language-dart">import 'package:network_data_transfer/host.dart';
+import 'package:english_words/english_words.dart';
+
+Iterable&lt;Device&gt; devices;
+Client client;
+
+void main() async{
+  client = Client(
+    ipVersion: IPVersion.v4,
+    name: "Client", // Optional friendly name of the Client host
+    deviceDiscoveryListener: MyDiscoveryListener(),
+    connectionListener: MyConnectionListener(),
+  );
+
+  // Wait for the Client to completely initialize
+  if(!await client.ready){
+    print("Could not start on Client");
+    return;
+  }
+  print("Client is ready. IP: ${client.ipAddress}");
+
+  // Start discovering devices
+  print("Discovering hosts...");
+  client.discoverHosts();
+}
+
+// Create listener for receiving advertisements and discovery alerts from the Server
+class MyDiscoveryListener implements DeviceDiscoveryListener{
+  @override
+  onDiscovery(Device newDevice, Iterable&lt;Device&gt; allDevices) {
+    print("Server Discovery Alert: $newDevice");
+    devices = allDevices;
+
+    // Connect to Server
+    client.connectTo(newDevice);
+  }
+  @override
+  onClose(bool isError, Object error, StackTrace stackTrace){
+    print("Discovery multicast socket closed");
+  }
+
+  @override
+  void onAdvertisement(Device device, Packet packet) {
+    print("Received ${packet.asString()} in onAdvertisement from Server.");
+  }
+}
+
+class MyConnectionListener implements ConnectionListener{
+  @override
+  void onConnected(Device device) {
+    print("Server Connected: $device");
+  }
+
+  @override
+  void onDisconnected(Device device, bool isError, Object error, StackTrace stackTrace) {
+    print("Server Disconnected: $device");
+  }
+
+  @override
+  void onMessage(Packet packet, Device device) {
+    print("Message Received from Server $device: ${packet.asString()}");
+    // Send message back to this client
+    Future.delayed(Duration(seconds: 1)).then((_) =&gt;
+        client.send(Packet.from(WordPair.random().asPascalCase), device,
+            ignoreIfNotConnected: true)
+    );
+  }
+}
+</code></pre>
+<p>Sample <code>server_test.dart</code> for working with a Server:</p>
+<pre class="language-dart"><code class="language-dart">import 'dart:io';
+
+import 'package:network_data_transfer/host.dart';
+import 'package:english_words/english_words.dart';
+
+Iterable&lt;Device&gt; devices;
+Server server;
+
+void main() async{
+  server = Server(
+    ipVersion: IPVersion.v4,
+    name: "Server", // Optional friendly name of the Server host
+    deviceDiscoveryListener: MyDiscoveryListener(),
+    connectionListener: MyConnectionListener(),
+    listenOn: useFirstFoundIP // Optional. Do not provide if you want to listen on all ip addresses
+  );
+
+  // Wait for the Server to completely initialize
+  if(!await server.ready){
+    print("Could not connect on Server");
+    return;
+  }
+  print("Server is ready at ${server.ipAddress}:${server.port}");
+}
+
+// Use the first IP address we find for the first interface. 
+// This is optional but can be used to choose the IP address for the correct interface
+Future&lt;String&gt; useFirstFoundIP(Future&lt;Iterable&lt;Map&lt;NetworkInterface, Iterable&lt;InternetAddress&gt;&gt;&gt;&gt; interfaceAddresses) async{
+  Iterable&lt;Map&lt;NetworkInterface, Iterable&lt;InternetAddress&gt;&gt;&gt; addressList = await interfaceAddresses;
+  return addressList.first.values.first.first.address;
+}
+
+// Create listener for receiving discovery alerts from clients
+class MyDiscoveryListener implements DeviceDiscoveryListener{
+  @override
+  onDiscovery(Device newDevice, Iterable&lt;Device&gt; allDevices) {
+    print("New Client Device Alert: $newDevice");
+    devices = allDevices;
+  }
+
+  @override
+  onClose(bool isError, Object error, StackTrace stackTrace){
+    print("Discovery multicast socket closed");
+  }
+
+  @override
+  void onAdvertisement(Device device, Packet packet) {
+    // Will never be used on the Server
+  }
+}
+
+// Create a listener to listen for connection and disconnection as well as
+// when messages arrive 
+class MyConnectionListener implements ConnectionListener{
+  @override
+  void onConnected(Device device) {
+    print("Device Connected to Server: $device");
+    // Send a handshake to begin conversation
+    server.send(Packet.from(WordPair.random().asPascalCase), device);
+  }
+
+  @override
+  void onDisconnected(Device device, bool isError, Object error, StackTrace stackTrace) {
+    print("Device Disconnected from Server: $device");
+  }
+
+  @override
+  void onMessage(Packet packet, Device device) {
+    print("Message Received from Client $device: ${packet.asString()}");
+    Future.delayed(Duration(seconds: 1)).then((_) =&gt;
+        server.send(Packet.from(WordPair.random().asPascalCase), device,
+            ignoreIfNotConnected: true)
+    );
+  }
+}
+</code></pre>
+      </section>
+      
+        <section class="summary">
+            <h2>Libraries</h2>
+          <dl>
+            <dt id="network_data_transfer">
+              <span class="name"><a href="network_data_transfer/network_data_transfer-library.html">network_data_transfer</a></span>             
+            </dt>
+            <dd>
+              This library allows Client-Server communication with service discovery
+and abstracts communication primitives and communication data using <a href="network_data_transfer/Packet-class.html">Packet</a>s. <a href="network_data_transfer/network_data_transfer-library.html">[...]</a>
+            </dd>
+          </dl>
+        </section>
+
+  </div> <!-- /.main-content -->
+
+  <div id="dartdoc-sidebar-right" class="col-xs-6 col-sm-6 col-md-2 sidebar sidebar-offcanvas-right">
+  </div>
+
+</main>
+
+<footer>
+  <span class="no-break">
+    network_data_transfer
+      0.0.3
+  </span>
+
+</footer>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="static-assets/typeahead.bundle.min.js"></script>
+<script src="static-assets/highlight.pack.js"></script>
+<script src="static-assets/URI.js"></script>
+<script src="static-assets/script.js"></script>
+
+
+</body>
+
+</html>

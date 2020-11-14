@@ -1,3 +1,10 @@
+/// This library allows Client-Server communication with service discovery
+/// and abstracts communication primitives and communication data using [Packet]s.
+///
+/// You can receive multicast/broadcast discovery/advertisement events with
+/// [DeviceDiscoveryListener] as well as receive reliable communication events
+/// using [ConnectionListener]. Create Servers using the [Server] class and clients
+/// using the [Client] class.
 library network_data_transfer;
 
 import 'dart:async';

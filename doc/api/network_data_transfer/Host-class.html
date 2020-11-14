@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the Host class from the network_data_transfer library, for the Dart programming language.">
+  <title>Host class - network_data_transfer library - Dart API</title>
+
+  
+  <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:500,400i,400,300|Source+Sans+Pro:400,300,700" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="../static-assets/github.css">
+  <link rel="stylesheet" href="../static-assets/styles.css">
+  <link rel="icon" href="../static-assets/favicon.png">
+
+</head>
+
+<body data-base-href="../"
+      data-using-base-href="false">
+
+<div id="overlay-under-drawer"></div>
+
+<header id="title">
+  <button id="sidenav-left-toggle" type="button">&nbsp;</button>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../index.html">network_data_transfer</a></li>
+    <li><a href="../network_data_transfer/network_data_transfer-library.html">network_data_transfer</a></li>
+    <li class="self-crumb">Host abstract class</li>
+  </ol>
+  <div class="self-name">Host</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+
+<main>
+
+  <div id="dartdoc-sidebar-left" class="col-xs-6 col-sm-3 col-md-2 sidebar sidebar-offcanvas-left">
+    <header id="header-search-sidebar" class="hidden-l">
+      <form class="search-sidebar" role="search">
+        <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+      </form>
+    </header>
+    
+    <ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+      <li><a href="../index.html">network_data_transfer</a></li>
+      <li><a href="../network_data_transfer/network_data_transfer-library.html">network_data_transfer</a></li>
+      <li class="self-crumb">Host abstract class</li>
+    </ol>
+    
+    <h5>network_data_transfer library</h5>
+    <ol>
+      <li class="section-title"><a href="../network_data_transfer/network_data_transfer-library.html#classes">Classes</a></li>
+      <li><a href="../network_data_transfer/Client-class.html">Client</a></li>
+      <li><a href="../network_data_transfer/ConnectionListener-class.html">ConnectionListener</a></li>
+      <li><a href="../network_data_transfer/Device-class.html">Device</a></li>
+      <li><a href="../network_data_transfer/DeviceDiscoveryListener-class.html">DeviceDiscoveryListener</a></li>
+      <li><a href="../network_data_transfer/Host-class.html">Host</a></li>
+      <li><a href="../network_data_transfer/Packet-class.html">Packet</a></li>
+      <li><a href="../network_data_transfer/Server-class.html">Server</a></li>
+    
+    
+    
+    
+    
+    
+      <li class="section-title"><a href="../network_data_transfer/network_data_transfer-library.html#enums">Enums</a></li>
+      <li><a href="../network_data_transfer/IPVersion-class.html">IPVersion</a></li>
+    
+      <li class="section-title"><a href="../network_data_transfer/network_data_transfer-library.html#typedefs">Typedefs</a></li>
+      <li><a href="../network_data_transfer/CustomAdvertisement.html">CustomAdvertisement</a></li>
+      <li><a href="../network_data_transfer/ListenOn.html">ListenOn</a></li>
+    
+    </ol>
+  </div>
+
+  <div id="dartdoc-main-content" class="col-xs-12 col-sm-9 col-md-8 main-content">
+      <div><h1><span class="kind-class">Host</span> class  </h1></div>
+
+    <section class="desc markdown">
+      <p>A Host is a generic endpoint (STA/AP) in the network.
+A Client and a Server are both hosts.</p>
+    </section>
+    
+    <section>
+      <dl class="dl-horizontal">
+
+
+
+        <dt>Implementers</dt>
+        <dd><ul class="comma-separated clazz-relationships">
+          <li><a href="../network_data_transfer/Client-class.html">Client</a></li>
+          <li><a href="../network_data_transfer/Server-class.html">Server</a></li>
+        </ul></dd>
+
+
+      </dl>
+    </section>
+
+    <section class="summary offset-anchor" id="constructors">
+      <h2>Constructors</h2>
+
+      <dl class="constructor-summary-list">
+        <dt id="Host" class="callable">
+          <span class="name"><a href="../network_data_transfer/Host/Host.html">Host</a></span><span class="signature">(<span class="parameter" id="-param-name">{<span class="type-annotation"><a href="https://api.dart.dev/stable/2.10.3/dart-core/String-class.html">String</a></span> <span class="parameter-name">name</span>, </span><span class="parameter" id="-param-multicastPort"><span class="type-annotation"><a href="https://api.dart.dev/stable/2.10.3/dart-core/int-class.html">int</a></span> <span class="parameter-name">multicastPort</span>, </span><span class="parameter" id="-param-ipVersion"><span class="type-annotation"><a href="../network_data_transfer/IPVersion-class.html">IPVersion</a></span> <span class="parameter-name">ipVersion</span>, </span><span class="parameter" id="-param-deviceDiscoveryListener"><span class="type-annotation"><a href="../network_data_transfer/DeviceDiscoveryListener-class.html">DeviceDiscoveryListener</a></span> <span class="parameter-name">deviceDiscoveryListener</span>, </span><span class="parameter" id="-param-connectionListener"><span class="type-annotation"><a href="../network_data_transfer/ConnectionListener-class.html">ConnectionListener</a></span> <span class="parameter-name">connectionListener</span>}</span>)</span>
+        </dt>
+        <dd>
+          <code>name</code> is useful for host/device identification purposes especially if discovery
+is enabled. If you specify a name, the name will be sent to communicating devices
+to add as a user friendly name during discovery. <a href="../network_data_transfer/Host/Host.html">[...]</a>
+        </dd>
+      </dl>
+    </section>
+
+    <section class="summary offset-anchor" id="instance-properties">
+      <h2>Properties</h2>
+
+      <dl class="properties">
+        <dt id="hashCode" class="property inherited">
+          <span class="name"><a href="https://api.dart.dev/stable/2.10.3/dart-core/Object/hashCode.html">hashCode</a></span>
+          <span class="signature">&#8594; <a href="https://api.dart.dev/stable/2.10.3/dart-core/int-class.html">int</a></span>         
+        </dt>
+        <dd class="inherited">
+          The hash code for this object. <a href="https://api.dart.dev/stable/2.10.3/dart-core/Object/hashCode.html">[...]</a>
+                  <div class="features">read-only, inherited</div>
+</dd>
+        <dt id="interfaceAddresses" class="property">
+          <span class="name"><a href="../network_data_transfer/Host/interfaceAddresses.html">interfaceAddresses</a></span>
+          <span class="signature">&#8594; <a href="https://api.dart.dev/stable/2.10.3/dart-async/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.dart.dev/stable/2.10.3/dart-core/Iterable-class.html">Iterable</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.dart.dev/stable/2.10.3/dart-core/Map-class.html">Map</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.dart.dev/stable/2.10.3/dart-io/NetworkInterface-class.html">NetworkInterface</a></span>, <span class="type-parameter"><a href="https://api.dart.dev/stable/2.10.3/dart-core/Iterable-class.html">Iterable</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.dart.dev/stable/2.10.3/dart-io/InternetAddress-class.html">InternetAddress</a></span>&gt;</span></span>&gt;</span></span>&gt;</span></span>&gt;</span></span>         
+        </dt>
+        <dd>
+           
+                  <div class="features">read-only</div>
+</dd>
+        <dt id="interfaces" class="property">
+          <span class="name"><a href="../network_data_transfer/Host/interfaces.html">interfaces</a></span>
+          <span class="signature">&#8594; <a href="https://api.dart.dev/stable/2.10.3/dart-async/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.dart.dev/stable/2.10.3/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.dart.dev/stable/2.10.3/dart-io/NetworkInterface-class.html">NetworkInterface</a></span>&gt;</span></span>&gt;</span></span>         
+        </dt>
+        <dd>
+           
+                  <div class="features">read-only</div>
+</dd>
+        <dt id="ipAddress" class="property">
+          <span class="name"><a href="../network_data_transfer/Host/ipAddress.html">ipAddress</a></span>
+          <span class="signature">&#8594; <a href="https://api.dart.dev/stable/2.10.3/dart-core/String-class.html">String</a></span>         
+        </dt>
+        <dd>
+          Get the detected IP address 
+                  <div class="features">read-only</div>
+</dd>
+        <dt id="ipAddresses" class="property">
+          <span class="name"><a href="../network_data_transfer/Host/ipAddresses.html">ipAddresses</a></span>
+          <span class="signature">&#8594; <a href="https://api.dart.dev/stable/2.10.3/dart-async/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.dart.dev/stable/2.10.3/dart-core/Iterable-class.html">Iterable</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.dart.dev/stable/2.10.3/dart-core/String-class.html">String</a></span>&gt;</span></span>&gt;</span></span>         
+        </dt>
+        <dd>
+          Get all IP addresses for all IP versions 
+                  <div class="features">read-only</div>
+</dd>
+        <dt id="ipv4Addresses" class="property">
+          <span class="name"><a href="../network_data_transfer/Host/ipv4Addresses.html">ipv4Addresses</a></span>
+          <span class="signature">&#8594; <a href="https://api.dart.dev/stable/2.10.3/dart-async/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.dart.dev/stable/2.10.3/dart-core/Iterable-class.html">Iterable</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.dart.dev/stable/2.10.3/dart-core/String-class.html">String</a></span>&gt;</span></span>&gt;</span></span>         
+        </dt>
+        <dd>
+          Get all IP addresses for IPv4 
+                  <div class="features">read-only</div>
+</dd>
+        <dt id="ipv6Addresses" class="property">
+          <span class="name"><a href="../network_data_transfer/Host/ipv6Addresses.html">ipv6Addresses</a></span>
+          <span class="signature">&#8594; <a href="https://api.dart.dev/stable/2.10.3/dart-async/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.dart.dev/stable/2.10.3/dart-core/Iterable-class.html">Iterable</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.dart.dev/stable/2.10.3/dart-core/String-class.html">String</a></span>&gt;</span></span>&gt;</span></span>         
+        </dt>
+        <dd>
+          Get all IP addresses for IPv6 
+                  <div class="features">read-only</div>
+</dd>
+        <dt id="multicastIPAddress" class="property">
+          <span class="name"><a href="../network_data_transfer/Host/multicastIPAddress.html">multicastIPAddress</a></span>
+          <span class="signature">&#8594; <a href="https://api.dart.dev/stable/2.10.3/dart-core/String-class.html">String</a></span>         
+        </dt>
+        <dd>
+          Get the multicast Group IP Address 
+                  <div class="features">read-only</div>
+</dd>
+        <dt id="multicastPort" class="property">
+          <span class="name"><a href="../network_data_transfer/Host/multicastPort.html">multicastPort</a></span>
+          <span class="signature">&#8594; <a href="https://api.dart.dev/stable/2.10.3/dart-core/int-class.html">int</a></span>         
+        </dt>
+        <dd>
+          Get the multicast port 
+                  <div class="features">read-only</div>
+</dd>
+        <dt id="name" class="property">
+          <span class="name"><a href="../network_data_transfer/Host/name.html">name</a></span>
+          <span class="signature">&#8596; <a href="https://api.dart.dev/stable/2.10.3/dart-core/String-class.html">String</a></span>         
+        </dt>
+        <dd>
+          Get the name of this Host. Must have been set using the set property or constructor 
+                  <div class="features">read / write</div>
+</dd>
+        <dt id="ready" class="property">
+          <span class="name"><a href="../network_data_transfer/Host/ready.html">ready</a></span>
+          <span class="signature">&#8594; <a href="https://api.dart.dev/stable/2.10.3/dart-async/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.dart.dev/stable/2.10.3/dart-core/bool-class.html">bool</a></span>&gt;</span></span>         
+        </dt>
+        <dd>
+          If this device is ready to 
+                  <div class="features">read-only</div>
+</dd>
+        <dt id="runtimeType" class="property inherited">
+          <span class="name"><a href="https://api.dart.dev/stable/2.10.3/dart-core/Object/runtimeType.html">runtimeType</a></span>
+          <span class="signature">&#8594; <a href="https://api.dart.dev/stable/2.10.3/dart-core/Type-class.html">Type</a></span>         
+        </dt>
+        <dd class="inherited">
+          A representation of the runtime type of the object. 
+                  <div class="features">read-only, inherited</div>
+</dd>
+      </dl>
+    </section>
+
+    <section class="summary offset-anchor" id="instance-methods">
+      <h2>Methods</h2>
+      <dl class="callables">
+        <dt id="disconnect" class="callable">
+          <span class="name"><a href="../network_data_transfer/Host/disconnect.html">disconnect</a></span><span class="signature">(<wbr>)
+            <span class="returntype parameter">&#8594; <a href="https://api.dart.dev/stable/2.10.3/dart-async/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+          </span>
+                  </dt>
+        <dd>
+           
+                  
+</dd>
+        <dt id="noSuchMethod" class="callable inherited">
+          <span class="name"><a href="https://api.dart.dev/stable/2.10.3/dart-core/Object/noSuchMethod.html">noSuchMethod</a></span><span class="signature">(<wbr><span class="parameter" id="noSuchMethod-param-invocation"><span class="type-annotation"><a href="https://api.dart.dev/stable/2.10.3/dart-core/Invocation-class.html">Invocation</a></span> <span class="parameter-name">invocation</span></span>)
+            <span class="returntype parameter">&#8594; dynamic</span>
+          </span>
+                  </dt>
+        <dd class="inherited">
+          Invoked when a non-existent method or property is accessed. <a href="https://api.dart.dev/stable/2.10.3/dart-core/Object/noSuchMethod.html">[...]</a>
+                  <div class="features">inherited</div>
+</dd>
+        <dt id="send" class="callable">
+          <span class="name"><a href="../network_data_transfer/Host/send.html">send</a></span><span class="signature">(<wbr><span class="parameter" id="send-param-packet"><span class="type-annotation"><a href="../network_data_transfer/Packet-class.html">Packet</a></span> <span class="parameter-name">packet</span>, </span><span class="parameter" id="send-param-device"><span class="type-annotation"><a href="../network_data_transfer/Device-class.html">Device</a></span> <span class="parameter-name">device</span>, </span><span class="parameter" id="send-param-ignoreIfNotConnected">{<span class="type-annotation"><a href="https://api.dart.dev/stable/2.10.3/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">ignoreIfNotConnected</span>: <span class="default-value">false</span>}</span>)
+            <span class="returntype parameter">&#8594; Future</span>
+          </span>
+                  </dt>
+        <dd>
+          Hosts can send messages to other devices using the internal socket
+contained in the Device. <a href="../network_data_transfer/Host/send.html">[...]</a>
+                  
+</dd>
+        <dt id="toString" class="callable inherited">
+          <span class="name"><a href="https://api.dart.dev/stable/2.10.3/dart-core/Object/toString.html">toString</a></span><span class="signature">(<wbr>)
+            <span class="returntype parameter">&#8594; <a href="https://api.dart.dev/stable/2.10.3/dart-core/String-class.html">String</a></span>
+          </span>
+                  </dt>
+        <dd class="inherited">
+          Returns a string representation of this object. 
+                  <div class="features">inherited</div>
+</dd>
+      </dl>
+    </section>
+
+    <section class="summary offset-anchor inherited" id="operators">
+      <h2>Operators</h2>
+      <dl class="callables">
+        <dt id="operator ==" class="callable inherited">
+          <span class="name"><a href="https://api.dart.dev/stable/2.10.3/dart-core/Object/operator_equals.html">operator ==</a></span><span class="signature">(<wbr><span class="parameter" id="==-param-other"><span class="type-annotation"><a href="https://api.dart.dev/stable/2.10.3/dart-core/Object-class.html">Object</a></span> <span class="parameter-name">other</span></span>)
+            <span class="returntype parameter">&#8594; <a href="https://api.dart.dev/stable/2.10.3/dart-core/bool-class.html">bool</a></span>
+          </span>
+                  </dt>
+        <dd class="inherited">
+          The equality operator. <a href="https://api.dart.dev/stable/2.10.3/dart-core/Object/operator_equals.html">[...]</a>
+                  <div class="features">inherited</div>
+</dd>
+      </dl>
+    </section>
+
+
+
+    <section class="summary offset-anchor" id="constants">
+      <h2>Constants</h2>
+
+      <dl class="properties">
+        <dt id="DEFAULT_MULTICAST_GROUP_IPV4" class="constant">
+          <span class="name "><a href="../network_data_transfer/Host/DEFAULT_MULTICAST_GROUP_IPV4-constant.html">DEFAULT_MULTICAST_GROUP_IPV4</a></span>
+          <span class="signature">&#8594; const <a href="https://api.dart.dev/stable/2.10.3/dart-core/String-class.html">String</a></span>
+                  </dt>
+        <dd>
+           
+                  
+  <div>
+            <span class="signature"><code>&quot;225.225.225.225&quot;</code></span>
+          </div>
+        </dd>
+        <dt id="DEFAULT_MULTICAST_GROUP_IPV6" class="constant">
+          <span class="name "><a href="../network_data_transfer/Host/DEFAULT_MULTICAST_GROUP_IPV6-constant.html">DEFAULT_MULTICAST_GROUP_IPV6</a></span>
+          <span class="signature">&#8594; const <a href="https://api.dart.dev/stable/2.10.3/dart-core/String-class.html">String</a></span>
+                  </dt>
+        <dd>
+           
+                  
+  <div>
+            <span class="signature"><code>&quot;FF02::FB&quot;</code></span>
+          </div>
+        </dd>
+        <dt id="DEFAULT_MULTICAST_PORT" class="constant">
+          <span class="name "><a href="../network_data_transfer/Host/DEFAULT_MULTICAST_PORT-constant.html">DEFAULT_MULTICAST_PORT</a></span>
+          <span class="signature">&#8594; const <a href="https://api.dart.dev/stable/2.10.3/dart-core/int-class.html">int</a></span>
+                  </dt>
+        <dd>
+           
+                  
+  <div>
+            <span class="signature"><code>5018</code></span>
+          </div>
+        </dd>
+      </dl>
+    </section>
+
+  </div> <!-- /.main-content -->
+
+  <div id="dartdoc-sidebar-right" class="col-xs-6 col-sm-6 col-md-2 sidebar sidebar-offcanvas-right">
+    <ol>
+    
+      <li class="section-title"><a href="../network_data_transfer/Host-class.html#constructors">Constructors</a></li>
+      <li><a href="../network_data_transfer/Host/Host.html">Host</a></li>
+    
+      <li class="section-title">
+        <a href="../network_data_transfer/Host-class.html#instance-properties">Properties</a>
+      </li>
+      <li class="inherited"><a href="https://api.dart.dev/stable/2.10.3/dart-core/Object/hashCode.html">hashCode</a></li>
+      <li><a href="../network_data_transfer/Host/interfaceAddresses.html">interfaceAddresses</a></li>
+      <li><a href="../network_data_transfer/Host/interfaces.html">interfaces</a></li>
+      <li><a href="../network_data_transfer/Host/ipAddress.html">ipAddress</a></li>
+      <li><a href="../network_data_transfer/Host/ipAddresses.html">ipAddresses</a></li>
+      <li><a href="../network_data_transfer/Host/ipv4Addresses.html">ipv4Addresses</a></li>
+      <li><a href="../network_data_transfer/Host/ipv6Addresses.html">ipv6Addresses</a></li>
+      <li><a href="../network_data_transfer/Host/multicastIPAddress.html">multicastIPAddress</a></li>
+      <li><a href="../network_data_transfer/Host/multicastPort.html">multicastPort</a></li>
+      <li><a href="../network_data_transfer/Host/name.html">name</a></li>
+      <li><a href="../network_data_transfer/Host/ready.html">ready</a></li>
+      <li class="inherited"><a href="https://api.dart.dev/stable/2.10.3/dart-core/Object/runtimeType.html">runtimeType</a></li>
+    
+      <li class="section-title"><a href="../network_data_transfer/Host-class.html#instance-methods">Methods</a></li>
+      <li><a href="../network_data_transfer/Host/disconnect.html">disconnect</a></li>
+      <li class="inherited"><a href="https://api.dart.dev/stable/2.10.3/dart-core/Object/noSuchMethod.html">noSuchMethod</a></li>
+      <li><a href="../network_data_transfer/Host/send.html">send</a></li>
+      <li class="inherited"><a href="https://api.dart.dev/stable/2.10.3/dart-core/Object/toString.html">toString</a></li>
+    
+      <li class="section-title inherited"><a href="../network_data_transfer/Host-class.html#operators">Operators</a></li>
+      <li class="inherited"><a href="https://api.dart.dev/stable/2.10.3/dart-core/Object/operator_equals.html">operator ==</a></li>
+    
+    
+    
+      <li class="section-title"><a href="../network_data_transfer/Host-class.html#constants">Constants</a></li>
+      <li><a href="../network_data_transfer/Host/DEFAULT_MULTICAST_GROUP_IPV4-constant.html">DEFAULT_MULTICAST_GROUP_IPV4</a></li>
+      <li><a href="../network_data_transfer/Host/DEFAULT_MULTICAST_GROUP_IPV6-constant.html">DEFAULT_MULTICAST_GROUP_IPV6</a></li>
+      <li><a href="../network_data_transfer/Host/DEFAULT_MULTICAST_PORT-constant.html">DEFAULT_MULTICAST_PORT</a></li>
+    
+    </ol>
+  </div><!--/.sidebar-offcanvas-->
+
+</main>
+
+<footer>
+  <span class="no-break">
+    network_data_transfer
+      0.0.3
+  </span>
+
+</footer>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="../static-assets/typeahead.bundle.min.js"></script>
+<script src="../static-assets/highlight.pack.js"></script>
+<script src="../static-assets/URI.js"></script>
+<script src="../static-assets/script.js"></script>
+
+
+</body>
+
+</html>

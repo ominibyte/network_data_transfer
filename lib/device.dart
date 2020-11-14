@@ -54,7 +54,7 @@ class Device{
   /// Used to determine if messages can be sent to this host
   bool get connected => _socket != null && _isConnected;
 
-  // For now devices are unique based on their IP addresses irrespective of ports
+  /// For now devices are unique based on their IP addresses irrespective of ports.
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

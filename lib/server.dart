@@ -18,7 +18,7 @@ class Server extends Host{
    * IP address found for the supplied [ipVersion]
    *
    * The optional [customAdvertisement] allows you to specify a custom advertisement message
-   * to be sent to the multicast group and received using [CustomAdvertisement.onAdvertisement]
+   * to be sent to the multicast group and received using [DeviceDiscoveryListener.onAdvertisement]
    *
    * [enableDiscovery] is used to inform the Server to broadcast advertisements
    * to a multicast group which will be joined by Clients to allow dynamic port

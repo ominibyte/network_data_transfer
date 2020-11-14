@@ -114,7 +114,10 @@ class Client extends Host{
 
     // Use the detected IP address to connect to the server
     try {
-      //TODO we need to figure out how to set the connecting interface
+      // TODO we need to figure out how to set the connecting interface to bind to.
+      // This can be an issue if a different interface is being used to make the
+      // request. A SocketException will be thrown due to failing with timeout
+
       _socket = await Socket.connect(device.ip, device.port,
           sourceAddress: ipAddress ?? _ipAddress);
     }
