@@ -1,3 +1,7 @@
+## [0.0.3] - 2020-11-13
+
+* Changed multicast discovery and advertisement implementation.
+
 ## [0.0.2] - 2020-11-12
 
 * Bug fixes and stability. 
